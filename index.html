@@ -38,12 +38,20 @@ html,body{margin:0;height:100%;background:#000;overflow:hidden;
 .pill{background:rgba(0,0,0,.6);color:#fff;border-radius:999px;padding:calc(var(--u)*1) calc(var(--u)*3);
   font-size:calc(var(--u)*4.4);font-weight:800;display:flex;align-items:center;gap:calc(var(--u)*1.2);border:3px solid rgba(255,255,255,.25)}
 .pill b{color:var(--accent);font-size:1.15em}
-#setBtn{position:absolute;top:calc(var(--u)*2);right:calc(var(--u)*2);border:none;border-radius:999px;cursor:pointer;
+#movePad{position:absolute;inset:0;pointer-events:none;display:none}
+#movePad.on{display:block}
+#movePad span{position:absolute;top:55%;transform:translateY(-50%);width:calc(var(--u)*17);height:calc(var(--u)*17);border-radius:50%;
+  background:rgba(0,0,0,.4);color:#fff;font-size:calc(var(--u)*9);display:flex;align-items:center;justify-content:center;border:4px solid rgba(255,255,255,.55);transition:background .15s,transform .15s}
+#mvL{left:calc(var(--u)*2.5)} #mvR{right:calc(var(--u)*2.5)}
+#movePad span.act{background:rgba(255,214,0,.75);color:#222;transform:translateY(-50%) scale(1.08)}
+.topBtns{position:absolute;top:calc(var(--u)*2);right:calc(var(--u)*2);display:flex;gap:calc(var(--u)*1.2);z-index:5}
+.title-on #homeBtn{display:none}
+.holdBtn{border:none;border-radius:999px;cursor:pointer;
   font:inherit;font-size:calc(var(--u)*2.6);font-weight:700;color:#fff;padding:calc(var(--u)*1.2) calc(var(--u)*2.4);
   background:linear-gradient(90deg,#ffd600 var(--p,0%),rgba(0,0,0,.55) var(--p,0%));}
-#banner{position:absolute;left:50%;bottom:calc(var(--u)*2.5);transform:translateX(-50%);max-width:92%;
+#banner{position:absolute;left:50%;top:calc(var(--u)*10.5);transform:translateX(-50%);max-width:92%;
   background:rgba(0,0,0,.68);color:#fff;border-radius:calc(var(--u)*3);padding:calc(var(--u)*1.4) calc(var(--u)*4);
-  font-size:calc(var(--u)*4.4);font-weight:800;text-align:center;pointer-events:none;border:3px solid rgba(255,255,255,.25);transition:opacity .3s}
+  font-size:calc(var(--u)*3.6);font-weight:800;text-align:center;pointer-events:none;border:3px solid rgba(255,255,255,.25);transition:opacity .3s}
 #banner.off{opacity:0}
 #banner .now{color:var(--accent)}
 #hold{height:calc(var(--u)*1.2);background:rgba(255,255,255,.2);border-radius:99px;margin-top:calc(var(--u)*1);overflow:hidden;display:none}
@@ -64,6 +72,12 @@ html,body{margin:0;height:100%;background:#000;overflow:hidden;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:calc(var(--u)*1)}
 .card span{font-size:calc(var(--u)*11);line-height:1}
 .card.sel{border-color:var(--accent);background:rgba(255,214,0,.25);box-shadow:0 0 0 6px rgba(255,214,0,.3)}
+#levels{display:flex;gap:calc(var(--u)*1.5);flex-wrap:wrap;justify-content:center}
+.lvl{border-radius:calc(var(--u)*2);border:4px solid rgba(255,255,255,.35);background:rgba(255,255,255,.1);color:#fff;font:inherit;cursor:pointer;
+  font-size:calc(var(--u)*2.8);font-weight:800;padding:calc(var(--u)*1) calc(var(--u)*2);line-height:1.2}
+.lvl b{display:block;font-size:1.25em;color:var(--accent)}
+.lvl.sel{border-color:var(--accent);background:rgba(255,214,0,.25)}
+.zone.good{fill:rgba(76,175,80,.55);stroke:#69f0ae;stroke-width:10;stroke-dasharray:none}
 #title p{margin:0;font-size:calc(var(--u)*4.2);font-weight:700}
 #title p.go{color:var(--accent)}
 
@@ -114,14 +128,19 @@ html,body{margin:0;height:100%;background:#000;overflow:hidden;
       <div class="pill"><span id="icoScore">⚽</span><span id="lblScore">골</span><b id="score">0</b></div>
       <div class="pill"><span id="lblShots">슛</span><b id="shots">0</b></div>
     </div>
-    <button id="setBtn" title="길게 누르면 설정이 열려요 (F2)">⚙ 선생님 설정 (길게 누르기)</button>
+    <div class="topBtns">
+      <button id="homeBtn" class="holdBtn" title="길게 누르면 처음 화면으로 가요 (Home 키)">🏠 처음으로</button>
+      <button id="setBtn" class="holdBtn" title="길게 누르면 설정이 열려요 (F2)">⚙ 선생님 설정 (길게 누르기)</button>
+    </div>
+    <div id="movePad"><span id="mvL">◀</span><span id="mvR">▶</span></div>
     <div id="msg"></div>
     <div id="banner" class="off"><div id="bannerText"></div><div id="hold"><i></i></div></div>
 
     <div id="title">
       <h1>🏆 모두의 스포츠 놀이</h1>
       <div id="cards"></div>
-      <p>종목을 누르거나, 아무 버튼(스위치)이나 누르면 시작해요</p>
+      <div id="levels"></div>
+      <p>단계를 고르고 종목을 누르세요 · 아무 버튼(스위치)이나 눌러도 시작해요</p>
       <p class="go animate__animated animate__pulse animate__infinite">▶ 시작!</p>
     </div>
   </div>
@@ -135,11 +154,18 @@ html,body{margin:0;height:100%;background:#000;overflow:hidden;
       <div class="sec">놀이</div>
       <div class="f"><label for="sport">종목</label>
         <select id="sport"><option value="soccer">⚽ 축구 (페널티킥)</option><option value="volley">🏐 배구 (스파이크)</option><option value="badminton">🏸 배드민턴 (스매시)</option><option value="tt">🏓 탁구</option></select></div>
-      <div class="f"><label for="mode">놀이 방법</label>
+      <div class="f"><label for="mode">단계 / 놀이 방법</label>
         <select id="mode">
-          <option value="simple">① 바로 하기 — 아무 데나 누르면 바로 (원인-결과 익히기)</option>
-          <option value="scan">② 스캔 — 노란 표시가 돌 때 원하는 곳에서 누르기 (스위치 1개)</option>
-          <option value="direct">③ 직접 고르기 — 왼쪽/가운데/오른쪽 화면을 직접 누르기</option>
+          <optgroup label="단계별 놀이">
+          <option value="simple">1단계 · 누르기 — 아무 데나 누르면 바로 (원인-결과 익히기)</option>
+          <option value="move">2단계 · 움직이며 누르기 — ◀ ▶로 선수 이동, 가운데(다른 키)로 하기</option>
+          <option value="receive">3단계 · 상대 공 받기 — 공이 오는 곳(노란 동그라미)으로 이동</option>
+          <option value="rally">4단계 · 받고 공격하기 — 받은 뒤 상대가 없는 빈 곳으로</option>
+          </optgroup>
+          <optgroup label="스위치·보조기기용">
+          <option value="scan">스캔 — 노란 표시가 돌 때 누르기 (스위치 1개)</option>
+          <option value="direct">직접 고르기 — 왼/가운데/오른쪽 누르기 · 머무르기 (헤드마우스·시선)</option>
+          </optgroup>
         </select></div>
       <div class="f"><label for="scanMs">스캔 속도 (한 칸에 머무는 시간) <output id="o_scanMs"></output></label>
         <input type="range" id="scanMs" min="800" max="6000" step="100"><span class="hint">길수록 천천히 움직여요</span></div>
@@ -157,6 +183,8 @@ html,body{margin:0;height:100%;background:#000;overflow:hidden;
         <input type="range" id="debounce" min="200" max="3000" step="100"><span class="hint">떨림으로 여러 번 눌리는 것을 막아요</span></div>
       <div class="f"><label for="dwell">머무르면 선택 (③ 직접 고르기) <output id="o_dwell"></output></label>
         <input type="range" id="dwell" min="0" max="4000" step="250"><span class="hint">마우스·헤드마우스·시선 장치를 대고만 있어도 선택. 0 = 끔</span></div>
+      <div class="f"><label for="recvMs">공이 날아오는 시간 (3·4단계) <output id="o_recvMs"></output></label>
+        <input type="range" id="recvMs" min="2000" max="10000" step="250"><span class="hint">길수록 공이 천천히 와서 움직일 시간이 많아요</span></div>
       <div class="f"><label for="pause">다음 차례까지 기다리는 시간 <output id="o_pause"></output></label>
         <input type="range" id="pause" min="1000" max="6000" step="250"></div>
 
@@ -170,6 +198,7 @@ html,body{margin:0;height:100%;background:#000;overflow:hidden;
         <label><input type="checkbox" id="sound"> 효과음</label>
         <label><input type="checkbox" id="voice"> 음성 안내·칭찬</label>
         <label><input type="checkbox" id="reduce"> 움직임·반짝임 줄이기</label>
+        <label><input type="checkbox" id="autoLevel"> 5번 성공하면 다음 단계로 자동으로 올리기</label>
       </div>
     </div>
     <div class="btns">
@@ -210,8 +239,8 @@ function tween(ms, fn, e = ease.inOut) {
 
 /* ---------- 설정 ---------- */
 const KEY = 'sportplay.v1';
-const DEF = { sport:'soccer', mode:'scan', scanMs:2000, opp:'easy', motion:0.8, trigger:'down', hold:0, debounce:800,
-  dwell:0, pause:2800, ratio:'auto', name:'', team:'#e53935', sound:true, voice:true, reduce:false };
+const DEF = { sport:'soccer', mode:'simple', scanMs:2000, opp:'easy', motion:0.8, trigger:'down', hold:0, debounce:800,
+  dwell:0, pause:2800, ratio:'auto', name:'', team:'#e53935', sound:true, voice:true, reduce:false, recvMs:4500, autoLevel:true };
 const S = Object.assign({}, DEF);
 try { Object.assign(S, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) {}
 // 주소로 바로 지정 가능: index.html?sport=volley&mode=direct&ratio=4:3
@@ -245,30 +274,41 @@ let sp = SP[S.sport] || SP.soccer;
 /* ---------- 그림 (SVG) ---------- */
 const SKIN = '#f1c27d', HAIR = '#3e2723';
 function itemSVG(item) {
-  if (item === 'racket') return `<g transform="translate(0,56)"><rect x="-3" y="0" width="6" height="36" rx="2" fill="#5d4037"/>
+  if (item === 'racket') return `<g transform="translate(0,72)"><rect x="-3" y="0" width="6" height="36" rx="2" fill="#5d4037"/>
     <ellipse cx="0" cy="62" rx="18" ry="26" fill="rgba(255,255,255,.15)" stroke="#eceff1" stroke-width="4"/>
     <path d="M-12 50H12M-15 62H15M-12 74H12M0 37V87M-8 39V85M8 39V85" stroke="#cfd8dc" stroke-width="1.2"/></g>`;
-  if (item === 'paddle') return `<g transform="translate(0,58)"><rect x="-4" y="0" width="8" height="20" rx="3" fill="#8d6e63"/>
+  if (item === 'paddle') return `<g transform="translate(0,72)"><rect x="-4" y="0" width="8" height="20" rx="3" fill="#8d6e63"/>
     <circle cx="0" cy="38" r="21" fill="#d32f2f" stroke="#222" stroke-width="2.5"/></g>`;
   return '';
 }
+/* 6등신 선수: 전체 키 216 = 머리(36) × 6
+   머리 -216~-180 · 어깨 -168 · 허리 -112 · 엉덩이 -104 · 무릎 -56 · 발 0 */
 function personSVG(p, o) {
-  const leg = (id, x) => `<g id="${p}${id}"><rect x="${x}" y="-64" width="17" height="58" rx="7" fill="${SKIN}"/>
-     <rect x="${x - 1}" y="-26" width="19" height="18" fill="#fafafa"/><ellipse cx="${x + 8}" cy="-4" rx="14" ry="7" fill="#212121"/></g>`;
-  const glove = o.gloves ? `<circle cy="62" r="13" fill="#fff59d" stroke="#333" stroke-width="2"/>` : `<circle cy="60" r="8" fill="${SKIN}"/>`;
+  const leg = (id, cx) => `<g id="${p}${id}">
+     <path d="M${cx - 7.5} -104 L${cx + 7.5} -104 L${cx + 6} -56 L${cx + 5} -10 L${cx - 5} -10 L${cx - 6} -56 Z" fill="${SKIN}"/>
+     <rect x="${cx - 6.5}" y="-44" width="13" height="36" rx="3" fill="${o.sock || '#fafafa'}"/>
+     <rect x="${cx - 6.5}" y="-44" width="13" height="5" fill="${o.color}"/>
+     <path d="M${cx - 8} -10 h16 q6 0 6 6 v2 h-28 v-2 q0 -6 6 -6z" fill="#212121"/></g>`;
+  const hand = o.gloves ? `<circle cy="77" r="10" fill="#fff59d" stroke="#333" stroke-width="2"/>` : `<circle cy="75" r="6.5" fill="${SKIN}"/>`;
+  const arm = (id, extra = '') => `<g id="${p}${id}">
+     <path d="M-5.5 0 L5.5 0 L4.5 38 L4 72 L-4 72 L-4.5 38 Z" fill="${SKIN}"/>
+     <rect x="-8" y="-6" width="16" height="26" rx="6" fill="${o.color}"/>${hand}${extra}</g>`;
   const head = o.face
-    ? `<circle cy="-172" r="24" fill="${SKIN}"/><path d="M-24 -176a24 24 0 0 1 48 0q-24 -12 -48 0z" fill="${HAIR}"/>
-       <circle cx="-8" cy="-172" r="3" fill="#222"/><circle cx="8" cy="-172" r="3" fill="#222"/>
-       <path d="M-8 -162q8 6 16 0" stroke="#222" stroke-width="2.5" fill="none" stroke-linecap="round"/>`
-    : `<circle cy="-172" r="24" fill="${HAIR}"/><ellipse cx="-23" cy="-170" rx="4" ry="7" fill="${SKIN}"/><ellipse cx="23" cy="-170" rx="4" ry="7" fill="${SKIN}"/>`;
+    ? `<ellipse cy="-198" rx="15" ry="18" fill="${SKIN}"/>
+       <path d="M-15.5 -200a15.5 18 0 0 1 31 0q-15 -9 -31 0z" fill="${HAIR}"/>
+       <ellipse cx="-15" cy="-197" rx="2.5" ry="4" fill="${SKIN}"/><ellipse cx="15" cy="-197" rx="2.5" ry="4" fill="${SKIN}"/>
+       <circle cx="-5.5" cy="-197" r="2.2" fill="#222"/><circle cx="5.5" cy="-197" r="2.2" fill="#222"/>
+       <path d="M-5 -188q5 4 10 0" stroke="#222" stroke-width="2" fill="none" stroke-linecap="round"/>`
+    : `<ellipse cy="-198" rx="15" ry="18" fill="${HAIR}"/>
+       <ellipse cx="-15" cy="-196" rx="2.8" ry="4.5" fill="${SKIN}"/><ellipse cx="15" cy="-196" rx="2.8" ry="4.5" fill="${SKIN}"/>`;
   return `<g id="${p}">
-    ${leg('LegL', -23)}${leg('LegR', 6)}
-    <rect x="-28" y="-88" width="56" height="30" rx="7" fill="#263238"/>
-    <g id="${p}ArmL"><rect x="-8" y="-4" width="16" height="62" rx="8" fill="${SKIN}"/>${glove}</g>
-    <g id="${p}ArmR"><rect x="-8" y="-4" width="16" height="62" rx="8" fill="${SKIN}"/>${glove}${itemSVG(o.item)}</g>
-    <rect x="-33" y="-150" width="66" height="72" rx="17" fill="${o.color}"/>
-    <rect x="-33" y="-150" width="66" height="10" rx="5" fill="rgba(255,255,255,.25)"/>
-    ${o.face ? '' : `<text y="-98" text-anchor="middle" font-size="34" font-weight="900" fill="#fff" stroke="rgba(0,0,0,.35)" stroke-width="1.5">${o.num || 10}</text>`}
+    ${leg('LegL', -10)}${leg('LegR', 10)}
+    <path d="M-21 -118 L21 -118 L24 -84 L3 -84 L0 -97 L-3 -84 L-24 -84 Z" fill="#263238"/>
+    ${arm('ArmL')}${arm('ArmR', itemSVG(o.item))}
+    <rect x="-6" y="-186" width="12" height="16" fill="${SKIN}"/>
+    <path d="M-26 -172 Q-29 -170 -27 -158 L-21 -112 L21 -112 L27 -158 Q29 -170 26 -172 Q13 -176 0 -170 Q-13 -176 -26 -172 Z" fill="${o.color}"/>
+    <path d="M-8 -172 L0 -164 L8 -172" stroke="rgba(255,255,255,.6)" stroke-width="2.5" fill="none"/>
+    ${o.face ? '' : `<text y="-128" text-anchor="middle" font-size="26" font-weight="900" fill="#fff" stroke="rgba(0,0,0,.35)" stroke-width="1.2">${o.num || 10}</text>`}
     ${head}</g>`;
 }
 const ballSVG = {
@@ -355,8 +395,8 @@ function buildBG(id) {
 const P = { pl:{x:0,y:0,s:1,r:0}, op:{x:0,y:0,s:1,r:0} };
 let rest = { plArmL:15, plArmR:-15, opArmL:0, opArmR:0 };
 function setPerson(id, o) { const g = $(id); if (g) g.setAttribute('transform', `translate(${o.x.toFixed(1)},${o.y.toFixed(1)}) scale(${o.s}) rotate(${o.r.toFixed(1)},0,-95)`); }
-function setArm(id, a) { const g = $(id); if (!g) return; const left = id.endsWith('L'); g.setAttribute('transform', `translate(${left ? -30 : 30},-140) rotate(${a.toFixed(1)})`); }
-function setLeg(id, a) { const g = $(id); if (g) g.setAttribute('transform', `rotate(${a.toFixed(1)},14,-62)`); }
+function setArm(id, a) { const g = $(id); if (!g) return; const left = id.endsWith('L'); g.setAttribute('transform', `translate(${left ? -23 : 23},-166) rotate(${a.toFixed(1)})`); }
+function setLeg(id, a) { const g = $(id); if (g) g.setAttribute('transform', `rotate(${a.toFixed(1)},${id.endsWith('L') ? -10 : 10},-104)`); }
 let ballState = { x:0, y:0, s:1, rot:0 };
 function setBall(x, y, s, floorY) {
   ballState.x = x; ballState.y = y; ballState.s = s;
@@ -376,7 +416,7 @@ function buildScene() {
   $('spin').innerHTML = ballSVG[S.sport];
   $('playerLayer').innerHTML = personSVG('pl', { color:S.team, item:sp.player.item, face:false, num:10 });
   $('oppLayer').innerHTML = personSVG('op', { color:sp.opp.color, item:sp.opp.item, face:true, gloves:sp.opp.gloves });
-  $('oppLayer').style.display = S.opp === 'none' ? 'none' : '';
+  $('oppLayer').style.display = S.opp === 'none' && !isRecv() ? 'none' : '';
   // 표시 영역 + 직접 고르기 기둥
   const zs = sp.zones, b1 = (zs[0][0] + zs[1][0]) / 2, b2 = (zs[1][0] + zs[2][0]) / 2;
   $('zonesLayer').innerHTML =
@@ -392,19 +432,50 @@ function buildScene() {
        : S.sport === 'badminton' ? { plArmL:25, plArmR:-60, opArmL:25, opArmR:-70 }
        : { plArmL:25, plArmR:-55, opArmL:25, opArmR:-55 };
   resetPoses();
-  $('icoScore').textContent = sp.icon; $('lblScore').textContent = sp.score; $('lblShots').textContent = sp.verb;
+  $('icoScore').textContent = sp.icon; $('lblScore').textContent = S.mode === 'receive' ? '받기' : sp.score; $('lblShots').textContent = isRecv() ? '받을 공' : sp.verb;
   lastHL = ''; updateZonesVisibility(); highlight(-1);
   document.documentElement.classList.toggle('reduce', !!S.reduce);
   layout();
 }
+/* ---------- 선수 좌우 이동 ---------- */
+const RANGE = { soccer:190, volley:200, badminton:200, tt:140 };   // 가운데에서 왼/오른쪽으로 갈 수 있는 거리
+let plOff = 0, plTarget = 0, moveDir = 0, walkPhase = 0, movePtr = false;
+const rng = () => RANGE[S.sport] || 180;
+const zoneOff = z => (z - 1) * rng();
+const offZone = o => o < -rng() / 2 ? 0 : o > rng() / 2 ? 2 : 1;
+const startPt = () => [sp.start[0] + plOff, sp.start[1]];
+const startFloor = () => S.sport === 'soccer' ? sp.start[1] + 22 : sp.floor0;
+const walkSpeed = () => 0.3 * S.motion;                               // px / ms
+function placePlayer(walking) {
+  P.pl.x = sp.player.x + plOff; setPerson('pl', P.pl);
+  if (walking) { const a = Math.sin(walkPhase) * 20; setLeg('plLegL', a); setLeg('plLegR', -a); }
+  if (ballWithPlayer) { const [bx, by] = startPt(); setBall(bx, by, 1, startFloor()); }
+}
+let ballWithPlayer = true;
+function stopLegs() { if (walkPhase) { walkPhase = 0; setLeg('plLegL', 0); setLeg('plLegR', 0); } }
+function stepPlayer(dt) {            // 목표 위치까지 부드럽게 걸어가기
+  const d = plTarget - plOff;
+  if (Math.abs(d) < .5) { stopLegs(); return; }
+  const step = Math.sign(d) * Math.min(Math.abs(d), walkSpeed() * dt);
+  plOff += step; walkPhase += Math.abs(step) * .09;
+  ballState.rot += step * 2; placePlayer(true);
+}
+async function walkTo(off) {
+  const from = plOff, dist = Math.abs(off - from);
+  if (dist >= 1) await tween(dist / walkSpeed(), k => { const prev = plOff; plOff = lerp(from, off, k); walkPhase += Math.abs(plOff - prev) * .09; ballState.rot += (plOff - prev) * 2; placePlayer(true); });
+  plTarget = plOff; stopLegs();
+}
+
 function resetPoses() {
-  Object.assign(P.pl, { x:sp.player.x, y:sp.player.y, s:sp.player.s, r:0 });
+  const lim = rng() * 1.15; plOff = Math.max(-lim, Math.min(lim, plOff)); plTarget = plOff;
+  Object.assign(P.pl, { x:sp.player.x + plOff, y:sp.player.y, s:sp.player.s, r:0 });
   Object.assign(P.op, { x:sp.opp.x, y:sp.opp.y, s:sp.opp.s, r:0 });
   setPerson('pl', P.pl); setPerson('op', P.op);
   setArm('plArmL', rest.plArmL); setArm('plArmR', rest.plArmR); setArm('opArmL', rest.opArmL); setArm('opArmR', rest.opArmR);
   setLeg('plLegL', 0); setLeg('plLegR', 0); setLeg('opLegL', 0); setLeg('opLegR', 0);
   ballState.rot = 0; $('ball').style.opacity = 1; $('shadow').style.opacity = 1;
-  setBall(sp.start[0], sp.start[1], 1, S.sport === 'soccer' ? sp.start[1] + 22 : sp.floor0);
+  walkPhase = 0; ballWithPlayer = true; oppBaseX = null;
+  const [bx, by] = startPt(); setBall(bx, by, 1, startFloor());
 }
 
 /* ---------- 화면 비율 ---------- */
@@ -514,6 +585,12 @@ let state = 'title';                 // title | ready | busy
 let score = 0, shots = 0;
 const SCAN_SEQ = [0, 1, 2, 1];
 let scanPos = 0, scanT = 0, hoverZone = -1, dwellT = 0;
+// 단계: simple(1) → move(2) → receive(3) → rally(4)
+const isMove = () => S.mode === 'move' || S.mode === 'receive' || S.mode === 'rally';
+const isRecv = () => S.mode === 'receive' || S.mode === 'rally';
+const canMove = () => isMove() && (state === 'ready' || state === 'serveWait' || state === 'incoming');
+const ZTO = ['왼쪽으로', '가운데로', '오른쪽으로'];
+let rallyOpp = -1, oppBaseX = null, recvZone = -1, levelWins = 0;
 
 let lastHL = '';
 function highlight(z, cls = 'on') {
@@ -527,11 +604,17 @@ function updateZonesVisibility() { $('zonesLayer').classList.toggle('hidden', S.
 
 function setBanner() {
   const b = $('banner'), t = $('bannerText');
-  if (state !== 'ready') { b.classList.add('off'); return; }
+  $('movePad').classList.toggle('on', canMove());
+  if (!['ready', 'serveWait', 'incoming'].includes(state)) { b.classList.add('off'); return; }
   b.classList.remove('off');
   const holdTip = S.hold > 0 ? ` <small>(꾹 ${(S.hold / 1000).toFixed(1)}초)</small>` : '';
-  if (S.mode === 'simple') t.innerHTML = `아무 곳이나 누르면 ${sp.verb}!${holdTip}`;
+  const nowZ = `<span class="now">${ZNAME[offZone(plOff)]}</span>`;
+  if (isRecv() && state === 'serveWait') t.innerHTML = `공이 와요, 준비! · 지금: ${nowZ}`;
+  else if (isRecv() && state === 'incoming') t.innerHTML = `노란 동그라미로 가서 받아요! · 지금: ${nowZ}`;
+  else if (S.mode === 'rally') t.innerHTML = `빈 곳으로 이동 · 가운데 누르면 ${sp.verb}! · 지금: ${nowZ}${holdTip}`;
+  else if (S.mode === 'simple') t.innerHTML = `아무 곳이나 누르면 ${sp.verb}!${holdTip}`;
   else if (S.mode === 'scan') t.innerHTML = `노란 표시에서 누르세요 · 지금:<span class="now">${ZNAME[SCAN_SEQ[scanPos]]}</span>${holdTip}`;
+  else if (S.mode === 'move') t.innerHTML = `◀ ▶ 이동 · 가운데 누르면 ${sp.verb}! · 지금: <span class="now">${ZNAME[offZone(plOff)]}</span>${holdTip}`;
   else t.innerHTML = `${sp.verb}할 곳을 누르세요 · <span class="now">왼쪽 · 가운데 · 오른쪽</span>${S.dwell > 0 ? ` <small>(대고 있어도 돼요)</small>` : ''}${holdTip}`;
 }
 function updateHUD() { $('score').textContent = score; $('shots').textContent = shots; }
@@ -539,19 +622,32 @@ function updateHUD() { $('score').textContent = score; $('shots').textContent = 
 let needBuild = false;
 function startReady() {
   if (needBuild) { needBuild = false; buildScene(); }
+  lastMoveZone = -1;
+  if (isRecv()) {                                  // 3·4단계: 상대가 먼저 공을 보냄
+    state = 'serveWait'; rallyOpp = -1; oppBaseX = null; highlight(-1); ballToOpp(); setBanner();
+    const g = gen; setTimeout(() => { if (g === gen) serve(); }, D(1000));
+    return;
+  }
   state = 'ready'; scanPos = 0; scanT = performance.now(); dwellT = 0;
   if (S.mode === 'scan') { highlight(SCAN_SEQ[0]); if (S.voice && S.scanMs >= 1500) speak(ZNAME[0]); } else highlight(-1);
   setBanner();
 }
+let gen = 0;   // 처음 화면으로 가면 진행 중이던 동작을 멈추기 위한 번호
 function startGame() {
-  state = 'busy'; ac();
-  $('title').classList.add('hide');
+  state = 'busy'; ac(); gen++;
+  $('title').classList.add('hide'); $('stage').classList.remove('title-on');
   buildScene(); hideMsg();
   speak(`${who()}${sp.name} 놀이를 시작해요!`);
   setTimeout(startReady, 600);
 }
 function goTitle() {
-  state = 'title'; renderCards(); $('title').classList.remove('hide'); $('banner').classList.add('off'); highlight(-1); hideMsg();
+  gen++; state = 'title'; press = null; holdBar(0); plOff = plTarget = 0; moveDir = 0; levelWins = 0; showRecvMark(0, 0, false);
+  try { speechSynthesis.cancel(); } catch (e) {}
+  score = 0; shots = 0; updateHUD();
+  buildScene(); renderCards();
+  $('title').classList.remove('hide'); $('stage').classList.add('title-on');
+  $('banner').classList.add('off'); highlight(-1); cols(-1); setRing(0); hideMsg();
+  lastFire = performance.now();
 }
 
 function opTarget(kz, blocking) {
@@ -591,18 +687,25 @@ function fly(from, to, dur, arc, s0, s1, f0, f1, e = ease.outQ) {
 
 async function shoot(z) {
   if (state !== 'ready') return;
+  const g = gen;
   state = 'busy'; dwellT = 0; setRing(0); cols(-1);
   if (S.mode !== 'simple') highlight(z, 'chosen');
   setBanner(); hideMsg();
-  shots++; updateHUD();
+  if (S.mode !== 'rally') shots++;
+  updateHUD();
 
-  const oppOn = S.opp !== 'none';
-  const blocked = oppOn && Math.random() < BLOCK_P[S.opp];
-  const kz = blocked ? z : [0, 1, 2].filter(i => i !== z)[Math.floor(Math.random() * 2)];
+  const oppOn = S.opp !== 'none' || isRecv();
+  // 4단계: 상대가 서 있는 곳으로 치면 막히고, 빈 곳으로 치면 득점
+  const blocked = S.mode === 'rally' && rallyOpp >= 0 ? z === rallyOpp : oppOn && Math.random() < BLOCK_P[S.opp];
+  const kz = S.mode === 'rally' && rallyOpp >= 0 ? rallyOpp : blocked ? z : [0, 1, 2].filter(i => i !== z)[Math.floor(Math.random() * 2)];
   const target = blocked ? sp.block(z) : sp.zones[z];
   const dur = D(sp.fly);
-  const sFloor = S.sport === 'soccer' ? sp.start[1] + 22 : sp.floor0;
+  const sFloor = startFloor();
 
+  moveDir = 0;
+  if (!isMove()) await walkTo(zoneOff(z));      // 고른 쪽으로 걸어가서
+  else { plTarget = plOff; stopLegs(); }
+  if (g !== gen) return;
   await playerAction();
 
   // 상대 선수 움직임 (공과 동시에)
@@ -613,7 +716,7 @@ async function shoot(z) {
       setPerson('op', o); setArm('opArmL', lerp(a0L, tg.aL, k)); setArm('opArmR', lerp(a0R, tg.aR, k));
     }, ease.out), dur * .12);
   }
-  await fly(sp.start, target, dur, sp.arc, 1, sp.es, sFloor, sp.zones[z][1] + (S.sport === 'soccer' ? 100 : 0));
+  await fly(startPt(), target, dur, sp.arc, 1, sp.es, sFloor, sp.zones[z][1] + (S.sport === 'soccer' ? 100 : 0));
 
   if (blocked) {
     sfx.bounce();
@@ -654,19 +757,104 @@ async function shoot(z) {
   }
   updateHUD();
   await wait(S.pause + (score % 5 === 0 && !blocked ? 1500 : 0));
-  if (state === 'title') return;
+  if (g !== gen) return;
+  if (!blocked) { await maybeLevelUp(); if (g !== gen) return; }
   // 원위치
   hideMsg();
   await tween(D(300), k => { $('ball').style.opacity = 1 - k; $('shadow').style.opacity = 1 - k; });
   const o = P.op, f = { ...o }, pl = P.pl, pf = { ...pl };
   await tween(D(500), k => {
     o.x = lerp(f.x, sp.opp.x, k); o.y = lerp(f.y, sp.opp.y, k); o.r = lerp(f.r, 0, k); setPerson('op', o);
-    pl.x = lerp(pf.x, sp.player.x, k); pl.y = lerp(pf.y, sp.player.y, k); setPerson('pl', pl);
+    pl.x = lerp(pf.x, sp.player.x + plOff, k); pl.y = lerp(pf.y, sp.player.y, k); setPerson('pl', pl);
   });
   resetPoses();
   $('ball').style.opacity = 0; $('shadow').style.opacity = 0;
   await tween(D(300), k => { $('ball').style.opacity = k; $('shadow').style.opacity = k; });
+  if (g !== gen) return;
   if (state === 'busy') startReady();
+}
+
+/* ---------- 3·4단계: 상대가 보내는 공 받기 ---------- */
+function showRecvMark(x, y, on, good) {
+  let m = $('recvMark');
+  if (!m) { m = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse'); m.id = 'recvMark'; $('fxLayer').appendChild(m); }
+  m.style.display = on ? '' : 'none';
+  if (!on) return;
+  if (x != null) { m.setAttribute('cx', x); m.setAttribute('cy', y); m.setAttribute('rx', 72); m.setAttribute('ry', 24); }
+  m.setAttribute('class', `zone ${good ? 'good' : 'on'} pulse`);
+}
+const handPt = () => [P.op.x + 24 * sp.opp.s, P.op.y - 200 * sp.opp.s];
+function ballToOpp() { ballWithPlayer = false; const [hx, hy] = handPt(); setBall(hx, hy, sp.es, S.sport === 'soccer' ? sp.opp.y : sp.zones[1][1] + 40); $('ball').style.opacity = 1; $('shadow').style.opacity = 1; }
+async function resetRound() {
+  hideMsg();
+  await tween(D(300), k => { $('ball').style.opacity = 1 - k; $('shadow').style.opacity = 1 - k; });
+  const o = P.op, f = { ...o };
+  await tween(D(400), k => { o.x = lerp(f.x, sp.opp.x, k); o.y = lerp(f.y, sp.opp.y, k); o.r = lerp(f.r, 0, k); setPerson('op', o); });
+  resetPoses();
+}
+async function serve() {
+  if (state !== 'serveWait' || settingsOpen) return;
+  const g = gen; state = 'incoming'; shots++; updateHUD(); hideMsg();
+  const z = Math.floor(Math.random() * 3); recvZone = z;
+  const rx = sp.start[0] + zoneOff(z), ry = sp.start[1];
+  // 상대가 공을 보낼 준비
+  const o = P.op, from = { ...o }, ox = sp.opp.x + (z - 1) * rng() * .35;
+  showRecvMark(rx, startFloor(), true, false);
+  setBanner(); speak(`${ZTO[z]}!`);
+  await tween(D(550), k => { o.x = lerp(from.x, ox, k); o.r = lerp(from.r, 0, k); setPerson('op', o); setArm('opArmR', lerp(rest.opArmR, -165, k)); const [hx, hy] = handPt(); setBall(hx, hy, sp.es, null); });
+  if (g !== gen) return;
+  tween(D(200), k => setArm('opArmR', lerp(-165, -30, k)));
+  sfx.hit();
+  await fly(handPt(), [rx, ry], S.recvMs, sp.arc * 1.3, sp.es, 1, S.sport === 'soccer' ? sp.opp.y : sp.zones[1][1] + 40, startFloor(), ease.inOut);
+  if (g !== gen) return;
+  showRecvMark(0, 0, false);
+  const ok = offZone(plOff) === z;
+  moveDir = 0; state = 'busy'; setBanner();
+  if (ok) {
+    sfx.bounce(); ripple(rx, startFloor(), 60, 18);
+    const [px, py] = startPt();
+    await tween(D(220), k => setBall(lerp(rx, px, k), lerp(ry, py, k), 1, startFloor()));
+    ballWithPlayer = true; plTarget = plOff; placePlayer(false);
+    if (S.mode === 'receive') {
+      score++; updateHUD(); confettiBurst(score % 5 === 0);
+      showMsg(`받았다!<small>${who()}${pick(PRAISE)}</small>`, '', 'animate__bounceIn');
+      sfx.win(); speak(`받았어요! ${who()}${pick(PRAISE)}`);
+      await wait(S.pause); if (g !== gen) return;
+      await maybeLevelUp(); if (g !== gen) return;
+      await resetRound(); if (g !== gen) return;
+      startReady();
+    } else {                       // 4단계: 이제 빈 곳으로 되받아치기
+      showMsg(`받았다!<small>이제 빈 곳으로 ${sp.verb}!</small>`, '', 'animate__bounceIn');
+      sfx.tick(); speak(`받았어요! 이제 빈 곳으로 ${sp.verb}!`);
+      rallyOpp = Math.floor(Math.random() * 3);
+      const o2 = { ...P.op }, tx = sp.zones[rallyOpp][0];
+      await tween(D(600), k => { P.op.x = lerp(o2.x, tx, k); setPerson('op', P.op); setArm('opArmR', lerp(-30, rest.opArmR, k)); });
+      if (g !== gen) return;
+      oppBaseX = tx; state = 'ready'; lastMoveZone = -1; lastHL = ''; highlight(offZone(plOff)); setBanner();
+    }
+  } else {
+    const dir = rx >= sp.start[0] + plOff ? 1 : -1;
+    await fly([rx, ry], [rx + dir * 70, 780], D(600), 0, 1, 1.3, startFloor(), 720, ease.lin);
+    showMsg(`아깝다!<small>공이 ${ZTO[z]} 왔어요</small>`, 'save', 'animate__headShake');
+    sfx.miss(); speak(`아깝다! 공이 ${ZTO[z]} 왔어요. 다시 해 봐요!`);
+    await wait(S.pause); if (g !== gen) return;
+    await resetRound(); if (g !== gen) return;
+    startReady();
+  }
+}
+
+/* ---------- 자동 단계 올리기 ---------- */
+const LV = ['simple', 'move', 'receive', 'rally'];
+const LV_NAME = { simple:'누르기', move:'움직이며 누르기', receive:'상대 공 받기', rally:'받고 빈 곳으로 공격하기', scan:'스캔', direct:'직접 고르기' };
+async function maybeLevelUp() {
+  const i = LV.indexOf(S.mode);
+  if (!S.autoLevel || i < 0 || i >= LV.length - 1) return;
+  if (++levelWins < 5) return;
+  levelWins = 0; S.mode = LV[i + 1]; saveS(); syncForm();
+  showMsg(`🎉 ${i + 2}단계!<small>${LV_NAME[S.mode]}</small>`, '', 'animate__tada');
+  confettiBurst(true); sfx.big(); speak(`${who()}${i + 2}단계로 올라가요! ${LV_NAME[S.mode]}`);
+  needBuild = true;
+  await wait(3200);
 }
 
 /* ---------- 입력 처리 (누름 · 꾹 누름 · 뗄 때 · 연속 무시) ---------- */
@@ -699,6 +887,7 @@ function fire() {
   let z;
   if (S.mode === 'simple') z = Math.floor(Math.random() * 3);
   else if (S.mode === 'scan') z = SCAN_SEQ[scanPos];
+  else if (isMove()) z = offZone(plOff);
   else z = press.zone == null ? (hoverZone >= 0 ? hoverZone : 1) : press.zone;
   shoot(z);
 }
@@ -707,18 +896,30 @@ function holdBar(p) {
   h.style.display = S.hold > 0 && p > 0 ? 'block' : 'none';
   h.firstElementChild.style.width = (p * 100).toFixed(0) + '%';
 }
+const MOVE_KEYS = { ArrowLeft:-1, ArrowRight:1, a:-1, A:-1, d:1, D:1, 'ㅁ':-1, 'ㅇ':1 };
+let lastMoveZone = -1;
 const SKIP_KEYS = new Set(['Tab', 'Shift', 'Control', 'Alt', 'Meta', 'ContextMenu', 'CapsLock', 'NumLock', 'Escape']);
 function keyZone(k) { return k === 'ArrowLeft' || k === '1' ? 0 : k === 'ArrowRight' || k === '3' ? 2 : (S.mode === 'direct' && k !== '2' && k !== 'ArrowUp' && k !== 'ArrowDown' && hoverZone >= 0 ? hoverZone : 1); }
 addEventListener('keydown', e => {
   if (settingsOpen) { if (e.key === 'Escape' || e.key === 'F2') { e.preventDefault(); closeSettings(); } return; }
   if (e.key === 'F2') { e.preventDefault(); openSettings(); return; }
+  if (e.key === 'Home') { e.preventDefault(); if (state !== 'title') goTitle(); return; }
+  if (isMove() && MOVE_KEYS[e.key]) { e.preventDefault(); if (canMove()) moveDir = MOVE_KEYS[e.key]; return; }
   if (SKIP_KEYS.has(e.key) || /^F\d+$/.test(e.key) || e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
   e.preventDefault(); inputDown('key', keyZone(e.key));
 });
-addEventListener('keyup', () => inputUp('key'));
+addEventListener('keyup', e => {
+  if (MOVE_KEYS[e.key] && isMove()) { if (moveDir === MOVE_KEYS[e.key]) moveDir = 0; return; }
+  inputUp('key');
+});
 addEventListener('pointerdown', e => {
-  if (settingsOpen || e.target.closest('#setBtn') || e.target.closest('.card')) return;
-  e.preventDefault(); hoverZone = zoneFromClientX(e.clientX, e.clientY);
+  if (settingsOpen || e.target.closest('.holdBtn') || e.target.closest('.card') || e.target.closest('.lvl')) return;
+  e.preventDefault();
+  if (canMove()) {       // 화면 왼쪽/오른쪽 = 이동, 가운데 = 슛
+    const r = $('stage').getBoundingClientRect(), rx = (e.clientX - r.left) / r.width;
+    if (rx < .3 || rx > .7) { moveDir = rx < .3 ? -1 : 1; movePtr = true; return; }
+  }
+  hoverZone = zoneFromClientX(e.clientX, e.clientY);
   inputDown('ptr', hoverZone);
 });
 addEventListener('pointermove', e => {
@@ -727,19 +928,24 @@ addEventListener('pointermove', e => {
   if (z !== hoverZone) { hoverZone = z; dwellT = 0; }
   if (press && press.src === 'ptr') press.zone = z;       // '뗄 때' 모드에서 누른 채 위치 고르기
 });
-addEventListener('pointerup', e => { inputUp('ptr'); if (e.pointerType === 'touch') { hoverZone = -1; dwellT = 0; } });
-addEventListener('pointercancel', () => { press = null; holdBar(0); });
+addEventListener('pointerup', e => { if (movePtr) { movePtr = false; moveDir = 0; return; } inputUp('ptr'); if (e.pointerType === 'touch') { hoverZone = -1; dwellT = 0; } });
+addEventListener('pointercancel', () => { press = null; holdBar(0); movePtr = false; moveDir = 0; });
 document.documentElement.addEventListener('pointerleave', () => { hoverZone = -1; dwellT = 0; });
 addEventListener('contextmenu', e => e.preventDefault());
-addEventListener('blur', () => { press = null; holdBar(0); });
+addEventListener('blur', () => { press = null; holdBar(0); moveDir = 0; movePtr = false; });
 
 // 게임패드 (버튼 아무거나 / 방향 왼·오)
-const padPrev = {};
+const padPrev = {}, padDir = {};
 function pollPads() {
   const pads = navigator.getGamepads ? navigator.getGamepads() : [];
   for (const gp of pads) {
     if (!gp) continue;
-    const down = gp.buttons.some(b => b.pressed), was = padPrev[gp.index];
+    const bt = i => gp.buttons[i] && gp.buttons[i].pressed;
+    if (isMove()) {
+      const dir = bt(14) ? -1 : bt(15) ? 1 : (gp.axes[0] < -.5 ? -1 : gp.axes[0] > .5 ? 1 : 0);
+      if (dir !== (padDir[gp.index] || 0)) { padDir[gp.index] = dir; moveDir = canMove() ? dir : 0; }
+    }
+    const down = gp.buttons.some((b, i) => b.pressed && !(isMove() && i >= 12 && i <= 15)), was = padPrev[gp.index];
     if (down && !was) inputDown('pad', gp.buttons[14] && gp.buttons[14].pressed ? 0 : gp.buttons[15] && gp.buttons[15].pressed ? 2 : 1);
     if (!down && was) inputUp('pad');
     padPrev[gp.index] = down;
@@ -777,11 +983,30 @@ function loop(now) {
         if (dwellT >= S.dwell && now - lastFire >= S.debounce) { lastFire = now; dwellT = 0; setRing(0); shoot(hoverZone); }
       } else setRing(0);
     }
-    // 상대 선수 기다리는 동작
-    if (S.opp !== 'none') {
-      const amp = S.reduce ? 6 : 22;
-      P.op.x = sp.opp.x + Math.sin(now / 900) * amp; setPerson('op', P.op);
+    // 우리 선수 좌우 이동
+    if (S.mode === 'scan') plTarget = zoneOff(SCAN_SEQ[scanPos]);
+    else if (S.mode === 'direct' && hoverZone >= 0) plTarget = zoneOff(hoverZone);
+    else if (isMove()) {
+      const lim = rng() * 1.15;
+      plTarget = moveDir ? moveDir * lim : plOff;
+      const zNow = offZone(plOff);
+      if (zNow !== lastMoveZone) { lastMoveZone = zNow; highlight(zNow); setBanner(); if (moveDir) sfx.tick(); }
+      $('mvL').classList.toggle('act', moveDir < 0); $('mvR').classList.toggle('act', moveDir > 0);
     }
+    stepPlayer(dt);
+    // 상대 선수 기다리는 동작
+    if (S.opp !== 'none' || isRecv()) {
+      const amp = S.reduce ? 6 : (oppBaseX != null ? 10 : 22);
+      P.op.x = (oppBaseX != null ? oppBaseX : sp.opp.x) + Math.sin(now / 900) * amp; setPerson('op', P.op);
+    }
+  } else if ((state === 'serveWait' || state === 'incoming') && !settingsOpen && canMove()) {
+    // 3·4단계: 공이 오는 동안 좌우 이동
+    plTarget = moveDir ? moveDir * rng() * 1.15 : plOff;
+    const zNow = offZone(plOff);
+    if (zNow !== lastMoveZone) { lastMoveZone = zNow; setBanner(); if (moveDir) sfx.tick(); }
+    if (state === 'incoming') showRecvMark(null, null, true, zNow === recvZone);
+    $('mvL').classList.toggle('act', moveDir < 0); $('mvR').classList.toggle('act', moveDir > 0);
+    stepPlayer(dt);
   } else if (state === 'title') {
     P.op.x = sp.opp.x + Math.sin(now / 900) * 22; setPerson('op', P.op);
   }
@@ -791,7 +1016,15 @@ function loop(now) {
 /* ---------- 시작 화면 카드 ---------- */
 function renderCards() {
   $('cards').innerHTML = Object.entries(SP).map(([k, v]) => `<button class="card ${k === S.sport ? 'sel' : ''}" data-sport="${k}"><span>${v.icon}</span>${v.name}</button>`).join('');
+  const LVB = [['simple', '1단계', '누르기'], ['move', '2단계', '움직이며 누르기'], ['receive', '3단계', '공 받기'], ['rally', '4단계', '받고 공격'], ['scan', '스위치', '스캔'], ['direct', '보조기기', '직접 고르기']];
+  $('levels').innerHTML = LVB.map(([m, a, b]) => `<button class="lvl ${m === S.mode ? 'sel' : ''}" data-mode="${m}"><b>${a}</b>${b}</button>`).join('');
 }
+$('levels').addEventListener('pointerdown', e => {
+  const c = e.target.closest('.lvl'); if (!c || settingsOpen) return;
+  e.preventDefault(); e.stopPropagation();
+  S.mode = c.dataset.mode; levelWins = 0; saveS(); syncForm(); renderCards(); buildScene();
+  speak(LV_NAME[S.mode]);
+});
 $('cards').addEventListener('pointerdown', e => {
   const c = e.target.closest('.card'); if (!c || settingsOpen) return;
   e.preventDefault(); e.stopPropagation();
@@ -800,23 +1033,29 @@ $('cards').addEventListener('pointerdown', e => {
 });
 
 /* ---------- 설정 창 ---------- */
-let settingsOpen = false, holdTimer = null, holdStart = 0, holdRAF = 0;
-const btn = $('setBtn');
-function btnHoldTick() { const p = Math.min(1, (performance.now() - holdStart) / 1000); btn.style.setProperty('--p', (p * 100) + '%'); if (p >= 1) { cancelBtnHold(); openSettings(); } else holdRAF = requestAnimationFrame(btnHoldTick); }
-function cancelBtnHold() { cancelAnimationFrame(holdRAF); btn.style.setProperty('--p', '0%'); }
-btn.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); holdStart = performance.now(); btnHoldTick(); });
-['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => btn.addEventListener(ev, cancelBtnHold));
+let settingsOpen = false;
+// 길게 눌러야 동작하는 버튼 (학생이 실수로 누르는 것 방지)
+function holdButton(btn, action, ms = 1000) {
+  let start = 0, raf = 0;
+  const cancel = () => { cancelAnimationFrame(raf); btn.style.setProperty('--p', '0%'); };
+  const tick = () => { const p = Math.min(1, (performance.now() - start) / ms); btn.style.setProperty('--p', (p * 100) + '%'); if (p >= 1) { cancel(); action(); } else raf = requestAnimationFrame(tick); };
+  btn.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); start = performance.now(); tick(); });
+  ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => btn.addEventListener(ev, cancel));
+}
+holdButton($('setBtn'), () => openSettings());
+holdButton($('homeBtn'), () => { if (state !== 'title') goTitle(); });
 
 function openSettings() { settingsOpen = true; press = null; holdBar(0); syncForm(); $('settings').classList.add('open'); try { speechSynthesis.cancel(); } catch (e) {} }
 function closeSettings() {
   settingsOpen = false; $('settings').classList.remove('open'); lastFire = performance.now();
-  if (state === 'ready') startReady();
+  if (state === 'serveWait' || (state === 'ready' && !(S.mode === 'rally' && rallyOpp >= 0))) startReady();
+  else if (state === 'ready') setBanner();
 }
-const FIELDS = ['sport', 'mode', 'scanMs', 'opp', 'motion', 'trigger', 'hold', 'debounce', 'dwell', 'pause', 'ratio', 'name', 'team', 'sound', 'voice', 'reduce'];
+const FIELDS = ['sport', 'mode', 'scanMs', 'opp', 'motion', 'trigger', 'hold', 'debounce', 'dwell', 'pause', 'ratio', 'name', 'team', 'sound', 'voice', 'reduce', 'recvMs', 'autoLevel'];
 const fmt = {
   scanMs: v => (v / 1000).toFixed(1) + '초', hold: v => v == 0 ? '바로' : (v / 1000).toFixed(1) + '초',
   debounce: v => (v / 1000).toFixed(1) + '초', dwell: v => v == 0 ? '끔' : (v / 1000).toFixed(2).replace(/0$/, '') + '초',
-  pause: v => (v / 1000).toFixed(1) + '초',
+  pause: v => (v / 1000).toFixed(1) + '초', recvMs: v => (v / 1000).toFixed(1) + '초',
   motion: v => { v = +v; return (v < .55 ? '아주 느리게' : v < .85 ? '느리게' : v < 1.15 ? '보통' : '빠르게') + ` (×${v.toFixed(2)})`; }
 };
 function syncForm() {
@@ -828,8 +1067,8 @@ FIELDS.forEach(k => {
     const v = el.type === 'checkbox' ? el.checked : el.type === 'range' ? +el.value : el.value;
     S[k] = v; saveS();
     if (fmt[k]) $('o_' + k).textContent = fmt[k](v);
-    if (['sport', 'team', 'opp', 'reduce'].includes(k)) { if (state !== 'busy') buildScene(); else needBuild = true; }
-    if (k === 'mode') { updateZonesVisibility(); highlight(-1); cols(-1); setRing(0); }
+    if (['sport', 'team', 'opp', 'reduce', 'mode'].includes(k)) { if (state === 'title' || state === 'ready' || state === 'serveWait') buildScene(); else needBuild = true; }
+    if (k === 'mode') { levelWins = 0; rallyOpp = -1; updateZonesVisibility(); highlight(-1); cols(-1); setRing(0); renderCards(); }
     if (k === 'ratio') layout();
     if (k === 'sport' && state !== 'title') { score = 0; shots = 0; updateHUD(); }
   });
@@ -841,7 +1080,7 @@ $('btnDefault').onclick = () => { Object.assign(S, DEF); saveS(); syncForm(); bu
 $('settings').addEventListener('pointerdown', e => { if (e.target.id === 'settings') closeSettings(); });
 
 /* ---------- 시작 ---------- */
-renderCards(); syncForm(); buildScene(); updateHUD();
+renderCards(); syncForm(); buildScene(); updateHUD(); $('stage').classList.add('title-on');
 requestAnimationFrame(loop);
 })();
 </script>
