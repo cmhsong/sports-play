@@ -10,6 +10,7 @@
 - 버튼: 🏠 처음으로(길게 누르기 / Home 키), ⚙ 선생님 설정(길게 누르기 / F2)
 - 이동: ← → 키, A/D 키, 화면 왼쪽·오른쪽 누르기, 게임패드 방향키 / 가운데로: ↑ ↓ 키, 스페이스, 화면 가운데 누르기
 - 이동 방법 설정: 누르는 동안 계속 이동 · 한 번 누르면 한 칸 이동 · 마우스를 움직이면 선수가 따라가기
+- 휴대폰·태블릿: 세로로 들어도 화면 비율이 고정되고, 놀이를 시작하면 전체 화면·가로 고정을 시도합니다(설정에서 끌 수 있음, 아이폰 Safari는 지원하지 않음)
 
 주소로 바로 지정: `?sport=volley&mode=receive&ratio=4:3`
 (sport: soccer, volley, badminton, tt / mode: simple, move, receive, rally, lr, scan, direct)

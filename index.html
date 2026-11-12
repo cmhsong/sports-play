@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>모두의 스포츠 놀이</title>
 <!-- 공개 애니메이션 라이브러리 (GitHub 오픈소스)
      - Animate.css  : https://github.com/animate-css/animate.css  (MIT)
@@ -15,10 +15,14 @@
 <style>
 :root{--u:6px;--accent:#ffd600;--ink:#1b1b1b;--panel:#fff;--muted:#5f6368;--line:#dadce0}
 *{box-sizing:border-box}
-html,body{margin:0;height:100%;background:#000;overflow:hidden;
+html,body{margin:0;height:100%;background:#000;overflow:hidden;overscroll-behavior:none;-webkit-text-size-adjust:100%;text-size-adjust:100%;
   font-family:"Malgun Gothic","Apple SD Gothic Neo","Noto Sans KR",sans-serif;
   user-select:none;-webkit-user-select:none;touch-action:none;-webkit-tap-highlight-color:transparent}
-#wrap{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+#wrap{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+#stage{flex:none}
+#title p.rot{display:none;font-size:calc(var(--u)*3.4);opacity:.9}
+#stage.portrait #title p.rot{display:block}
 #stage{position:relative;overflow:hidden;background:#123}
 #scene{position:absolute;inset:0;width:100%;height:100%;display:block}
 
@@ -75,7 +79,7 @@ html,body{margin:0;height:100%;background:#000;overflow:hidden;
 #msg.show{opacity:1}
 
 /* 시작 화면 */
-#title{position:absolute;inset:0;background:rgba(5,10,30,.78);display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;text-align:center;gap:calc(var(--u)*3)}
+#title{position:absolute;inset:0;background:rgba(5,10,30,.78);display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;text-align:center;gap:calc(var(--u)*3);padding:0 calc(var(--u)*2.5)}
 #title.hide{display:none}
 #title h1{margin:0;font-size:calc(var(--u)*9);text-shadow:0 4px 0 #000}
 #cards{display:flex;gap:calc(var(--u)*2.5);flex-wrap:wrap;justify-content:center}
@@ -83,6 +87,8 @@ html,body{margin:0;height:100%;background:#000;overflow:hidden;
   background:rgba(255,255,255,.1);color:#fff;font:inherit;font-size:calc(var(--u)*4.4);font-weight:800;cursor:pointer;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:calc(var(--u)*1)}
 .card span{font-size:calc(var(--u)*11);line-height:1}
+.card{white-space:nowrap;letter-spacing:-.04em}
+#stage.portrait #title{gap:calc(var(--u)*2.2)}
 .card.sel{border-color:var(--accent);background:rgba(255,214,0,.25);box-shadow:0 0 0 6px rgba(255,214,0,.3)}
 #levels{display:flex;gap:calc(var(--u)*1.5);flex-wrap:wrap;justify-content:center}
 .lvl{border-radius:calc(var(--u)*2);border:4px solid rgba(255,255,255,.35);background:rgba(255,255,255,.1);color:#fff;font:inherit;cursor:pointer;
@@ -160,6 +166,7 @@ html,body{margin:0;height:100%;background:#000;overflow:hidden;
       <div id="cards"></div>
       <div id="levels"></div>
       <p>단계를 고르고 종목을 누르세요 · 아무 버튼(스위치)이나 눌러도 시작해요</p>
+      <p class="rot">📱 휴대폰을 가로로 돌리면 더 크게 보여요</p>
       <p class="go animate__animated animate__pulse animate__infinite">▶ 시작!</p>
     </div>
   </div>
@@ -237,6 +244,7 @@ html,body{margin:0;height:100%;background:#000;overflow:hidden;
         <label><input type="checkbox" id="voice"> 음성 안내·칭찬</label>
         <label><input type="checkbox" id="reduce"> 움직임·반짝임 줄이기</label>
         <label><input type="checkbox" id="autoLevel"> 5번 성공하면 다음 단계로 자동으로 올리기</label>
+        <label><input type="checkbox" id="full"> 휴대폰·태블릿에서 전체 화면(가로)으로 놀이하기</label>
       </div>
     </div>
     <div class="btns">
@@ -280,7 +288,7 @@ function tween(ms, fn, e = ease.inOut) {
 const KEY = 'sportplay.v1';
 const DEF = { sport:'soccer', mode:'simple', scanMs:2000, opp:'easy', motion:0.8, trigger:'down', hold:0, debounce:800,
   dwell:0, pause:2800, ratio:'auto', name:'', team:'#e53935', sound:true, voice:true, reduce:false, recvMs:4500, autoLevel:true,
-  lrKinds:'all', lrMax:3, moveStyle:'hold', lrHint:true, lrBlock:true, mouseMove:false };
+  lrKinds:'all', lrMax:3, moveStyle:'hold', lrHint:true, lrBlock:true, mouseMove:false, full:true };
 const S = Object.assign({}, DEF);
 try { Object.assign(S, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) {}
 // 주소로 바로 지정 가능: index.html?sport=volley&mode=direct&ratio=4:3
@@ -740,17 +748,44 @@ function resetPoses() {
 
 /* ---------- 화면 비율 ---------- */
 const RATIOS = { '16:9':16/9, '16:10':16/10, '4:3':4/3, '3:2':3/2, '1:1':1 };
-function layout() {
-  const ww = innerWidth, wh = innerHeight;
-  const r = S.ratio === 'auto' ? ww / wh : (RATIOS[S.ratio] || 16/9);
+/* 휴대폰에서도 흔들리지 않게: 안전 영역을 뺀 실제 크기로 계산하고, 주소창·글자판 때문에 생기는 작은 변화는 무시 */
+function viewSize() {
+  const w = $('wrap'), cs = getComputedStyle(w), f = v => parseFloat(v) || 0;
+  return [w.clientWidth - f(cs.paddingLeft) - f(cs.paddingRight), w.clientHeight - f(cs.paddingTop) - f(cs.paddingBottom)];
+}
+let lastVW = 0, lastVH = 0;
+function layout(force) {
+  const [ww, wh] = viewSize(); if (ww < 50 || wh < 50) return;
+  // 설정 창에서 글자판이 올라와 높이만 줄어든 경우에는 화면을 다시 짜지 않음
+  if (force !== true && settingsOpen && Math.abs(ww - lastVW) < 2 && wh < lastVH) return;
+  lastVW = ww; lastVH = wh;
+  // 자동: 세로로 든 휴대폰(너무 길쭉)이나 아주 넓은 화면은 놀이 화면이 안정적인 범위(0.72 ~ 2.4)로 맞춤
+  const r = S.ratio === 'auto' ? clampN(ww / wh, .72, 2.4) : (RATIOS[S.ratio] || 16/9);
   let sw = ww, sh = ww / r; if (sh > wh) { sh = wh; sw = wh * r; }
+  sw = Math.floor(sw); sh = Math.floor(sh);
   const st = $('stage'); st.style.width = sw + 'px'; st.style.height = sh + 'px';
+  st.classList.toggle('portrait', ww < wh);
   document.documentElement.style.setProperty('--u', (Math.min(sh, sw * 0.62) / 100).toFixed(2) + 'px');
   const base = 1000 / 620; let W, H;
-  if (r >= base) { H = 620; W = 620 * r; } else { W = 1000; H = 1000 / r; }
+  if (r >= base) { H = 620; W = 620 * r; }
+  else if (r >= 1) { W = 1000; H = 1000 / r; }
+  else { W = Math.max(760, 1000 * r); H = W / r; }        // 세로 화면: 양옆을 조금 잘라 선수와 경기장을 크게
   $('scene').setAttribute('viewBox', `${(500 - W / 2).toFixed(1)} ${(310 - H / 2).toFixed(1)} ${W.toFixed(1)} ${H.toFixed(1)}`);
 }
-addEventListener('resize', layout);
+let layoutT = 0;
+function relayout() { layout(); clearTimeout(layoutT); layoutT = setTimeout(layout, 350); }   // 돌린 직후에는 크기가 늦게 바뀌는 기기가 있어 한 번 더
+['resize', 'orientationchange', 'pageshow'].forEach(ev => addEventListener(ev, relayout));
+document.addEventListener('fullscreenchange', relayout);
+try { if (screen.orientation && screen.orientation.addEventListener) screen.orientation.addEventListener('change', relayout); } catch (e) {}
+['gesturestart', 'gesturechange'].forEach(ev => document.addEventListener(ev, e => e.preventDefault()));   // iOS 두 손가락 확대 막기
+function goFull() {                  // 휴대폰·태블릿: 전체 화면 + 가로 고정 (지원하는 기기만)
+  try {
+    if (!S.full || !matchMedia('(pointer:coarse)').matches || document.fullscreenElement) return;
+    const el = document.documentElement, p = el.requestFullscreen && el.requestFullscreen({ navigationUI:'hide' });
+    if (p && p.then) p.then(() => screen.orientation && screen.orientation.lock && screen.orientation.lock('landscape')).catch(() => {});
+  } catch (e) {}
+}
+
 
 /* ---------- 소리 ---------- */
 let AC = null;
@@ -898,7 +933,7 @@ function startReady() {
 }
 let gen = 0;   // 처음 화면으로 가면 진행 중이던 동작을 멈추기 위한 번호
 function startGame() {
-  state = 'busy'; ac(); gen++;
+  state = 'busy'; ac(); gen++; goFull();
   $('title').classList.add('hide'); $('stage').classList.remove('title-on');
   buildScene(); hideMsg();
   speak(`${who()}${sp.name} 놀이를 시작해요!`);
@@ -1332,11 +1367,11 @@ holdButton($('homeBtn'), () => { if (state !== 'title') goTitle(); });
 
 function openSettings() { settingsOpen = true; press = null; holdBar(0); syncForm(); $('settings').classList.add('open'); try { speechSynthesis.cancel(); } catch (e) {} }
 function closeSettings() {
-  settingsOpen = false; $('settings').classList.remove('open'); lastFire = performance.now();
+  settingsOpen = false; $('settings').classList.remove('open'); lastFire = performance.now(); layout(true);
   if (state === 'serveWait' || (state === 'ready' && !(S.mode === 'rally' && rallyOpp >= 0))) startReady();
   else if (state === 'ready') setBanner();
 }
-const FIELDS = ['sport', 'mode', 'scanMs', 'opp', 'motion', 'trigger', 'hold', 'debounce', 'dwell', 'pause', 'ratio', 'name', 'team', 'sound', 'voice', 'reduce', 'recvMs', 'autoLevel', 'lrKinds', 'lrMax', 'moveStyle', 'lrHint', 'lrBlock', 'mouseMove'];
+const FIELDS = ['sport', 'mode', 'scanMs', 'opp', 'motion', 'trigger', 'hold', 'debounce', 'dwell', 'pause', 'ratio', 'name', 'team', 'sound', 'voice', 'reduce', 'recvMs', 'autoLevel', 'lrKinds', 'lrMax', 'moveStyle', 'lrHint', 'lrBlock', 'mouseMove', 'full'];
 const fmt = {
   scanMs: v => (v / 1000).toFixed(1) + '초', hold: v => v == 0 ? '바로' : (v / 1000).toFixed(1) + '초',
   debounce: v => (v / 1000).toFixed(1) + '초', dwell: v => v == 0 ? '끔' : (v / 1000).toFixed(2).replace(/0$/, '') + '초',
