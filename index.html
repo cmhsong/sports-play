@@ -81,15 +81,21 @@ html,body{margin:0;height:100%;background:#000;overflow:hidden;overscroll-behavi
 /* 시작 화면 */
 #title{position:absolute;inset:0;background:rgba(5,10,30,.78);display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;text-align:center;gap:calc(var(--u)*3);padding:0 calc(var(--u)*2.5)}
 #title.hide{display:none}
-#title h1{margin:0;font-size:calc(var(--u)*9);text-shadow:0 4px 0 #000}
+#title h1{margin:0;font-size:calc(var(--u)*7);text-shadow:0 4px 0 #000}
 #cards{display:flex;gap:calc(var(--u)*2.5);flex-wrap:wrap;justify-content:center}
-.card{width:calc(var(--u)*24);height:calc(var(--u)*24);border-radius:calc(var(--u)*3);border:5px solid rgba(255,255,255,.35);
+.card{width:calc(var(--u)*24);height:calc(var(--u)*19);border-radius:calc(var(--u)*3);border:5px solid rgba(255,255,255,.35);
   background:rgba(255,255,255,.1);color:#fff;font:inherit;font-size:calc(var(--u)*4.4);font-weight:800;cursor:pointer;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:calc(var(--u)*1)}
 .card span{font-size:calc(var(--u)*11);line-height:1}
 .card{white-space:nowrap;letter-spacing:-.04em}
 #stage.portrait #title{gap:calc(var(--u)*2.2)}
 .card.sel{border-color:var(--accent);background:rgba(255,214,0,.25);box-shadow:0 0 0 6px rgba(255,214,0,.3)}
+#chars{display:flex;gap:calc(var(--u)*1.2);flex-wrap:wrap;justify-content:center}
+.chr{width:calc(var(--u)*10.5);border-radius:calc(var(--u)*2);border:4px solid rgba(255,255,255,.35);background:rgba(255,255,255,.12);color:#fff;font:inherit;
+  font-size:calc(var(--u)*2.5);font-weight:800;cursor:pointer;white-space:nowrap;letter-spacing:-.06em;padding:calc(var(--u)*.5) 0 calc(var(--u)*.7);line-height:1.1}
+.chr svg,.chr i{display:block;width:100%;height:calc(var(--u)*8.5)}
+.chr i{font-style:normal;font-size:calc(var(--u)*6);line-height:calc(var(--u)*8.5)}
+.chr.sel{border-color:var(--accent);background:rgba(255,214,0,.28);box-shadow:0 0 0 5px rgba(255,214,0,.3)}
 #levels{display:flex;gap:calc(var(--u)*1.5);flex-wrap:wrap;justify-content:center}
 .lvl{border-radius:calc(var(--u)*2);border:4px solid rgba(255,255,255,.35);background:rgba(255,255,255,.1);color:#fff;font:inherit;cursor:pointer;
   font-size:calc(var(--u)*2.8);font-weight:800;padding:calc(var(--u)*1) calc(var(--u)*2);line-height:1.2}
@@ -133,10 +139,11 @@ html,body{margin:0;height:100%;background:#000;overflow:hidden;overscroll-behavi
   <div id="stage">
     <svg id="scene" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 620" preserveAspectRatio="xMidYMid meet">
       <defs>
-        <linearGradient id="gSkin" x1="0" x2="1"><stop offset="0" stop-color="#ffe0b8"/><stop offset=".5" stop-color="#f1c27d"/><stop offset="1" stop-color="#c58a4c"/></linearGradient>
-        <linearGradient id="gCyl" x1="0" x2="1"><stop offset="0" stop-color="#fff" stop-opacity=".36"/><stop offset=".45" stop-color="#fff" stop-opacity="0"/><stop offset=".55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".38"/></linearGradient>
-        <radialGradient id="gHead" cx=".38" cy=".32" r=".8"><stop offset="0" stop-color="#ffe8cc"/><stop offset=".6" stop-color="#f1c27d"/><stop offset="1" stop-color="#c58a4c"/></radialGradient>
-        <radialGradient id="gHair" cx=".35" cy=".25" r=".9"><stop offset="0" stop-color="#7a5444"/><stop offset=".5" stop-color="#3e2723"/><stop offset="1" stop-color="#1c100d"/></radialGradient>
+        <linearGradient id="gSkin" x1="0" x2="1"><stop offset="0" stop-color="#ffeedd"/><stop offset=".55" stop-color="#fbd9bd"/><stop offset="1" stop-color="#e3a985"/></linearGradient>
+        <linearGradient id="gCyl" x1="0" x2="1"><stop offset="0" stop-color="#fff" stop-opacity=".22"/><stop offset=".45" stop-color="#fff" stop-opacity="0"/><stop offset=".55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#3a2416" stop-opacity=".3"/></linearGradient>
+        <radialGradient id="gHead" cx=".38" cy=".32" r=".8"><stop offset="0" stop-color="#fff3e6"/><stop offset=".65" stop-color="#fbdcc2"/><stop offset="1" stop-color="#e8b08c"/></radialGradient>
+        <radialGradient id="gHair" cx=".35" cy=".25" r=".9"><stop offset="0" stop-color="#6d5348"/><stop offset=".5" stop-color="#3f2e28"/><stop offset="1" stop-color="#241814"/></radialGradient>
+        <radialGradient id="gHairF" cx=".35" cy=".25" r=".9"><stop offset="0" stop-color="#b9805a"/><stop offset=".5" stop-color="#8a5637"/><stop offset="1" stop-color="#5a3521"/></radialGradient>
         <radialGradient id="gBall" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#fff" stop-opacity=".4"/><stop offset=".3" stop-color="#fff" stop-opacity="0"/><stop offset=".6" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".4"/></radialGradient>
       </defs>
       <g id="bgLayer"></g>
@@ -163,9 +170,10 @@ html,body{margin:0;height:100%;background:#000;overflow:hidden;overscroll-behavi
 
     <div id="title">
       <h1>🏆 모두의 스포츠 놀이</h1>
+      <div id="chars"></div>
       <div id="cards"></div>
       <div id="levels"></div>
-      <p>단계를 고르고 종목을 누르세요 · 아무 버튼(스위치)이나 눌러도 시작해요</p>
+      <p>선수와 단계를 고르고 종목을 누르세요 · 아무 버튼(스위치)이나 눌러도 시작해요</p>
       <p class="rot">📱 휴대폰을 가로로 돌리면 더 크게 보여요</p>
       <p class="go animate__animated animate__pulse animate__infinite">▶ 시작!</p>
     </div>
@@ -237,6 +245,8 @@ html,body{margin:0;height:100%;background:#000;overflow:hidden;overscroll-behavi
       <div class="f"><label for="ratio">화면 비율</label>
         <select id="ratio"><option value="auto">자동 (창에 꽉 차게)</option><option value="16:9">16:9 (TV·모니터)</option><option value="16:10">16:10 (노트북)</option><option value="4:3">4:3 (태블릿·전자칠판)</option><option value="3:2">3:2</option><option value="1:1">1:1 (정사각형)</option></select></div>
       <div class="f"><label for="name">학생 이름 (칭찬할 때 불러줘요)</label><input type="text" id="name" maxlength="10" placeholder="예: 민수"></div>
+      <div class="f"><label for="char">우리 선수 (시작 화면에서도 고를 수 있어요)</label>
+        <select id="char"><option value="mix">섞어서 (놀이마다 여자·남자 번갈아)</option><option value="f1">하늘 (여)</option><option value="m1">바다 (남)</option><option value="f2">노을 (여)</option><option value="m2">도토리 (남)</option><option value="f3">보리 (여)</option><option value="m3">솔 (남)</option></select></div>
       <div class="f"><label for="team">우리 팀 유니폼 색</label>
         <select id="team"><option value="#e53935">빨강</option><option value="#1e88e5">파랑</option><option value="#fdd835">노랑</option><option value="#43a047">초록</option><option value="#8e24aa">보라</option><option value="#fb8c00">주황</option></select></div>
       <div class="checks">
@@ -287,7 +297,7 @@ function tween(ms, fn, e = ease.inOut) {
 /* ---------- 설정 ---------- */
 const KEY = 'sportplay.v1';
 const DEF = { sport:'soccer', mode:'simple', scanMs:2000, opp:'easy', motion:0.8, trigger:'down', hold:0, debounce:800,
-  dwell:0, pause:2800, ratio:'auto', name:'', team:'#e53935', sound:true, voice:true, reduce:false, recvMs:4500, autoLevel:true,
+  dwell:0, pause:2800, ratio:'auto', name:'', team:'#e53935', char:'mix', sound:true, voice:true, reduce:false, recvMs:4500, autoLevel:true,
   lrKinds:'all', lrMax:3, moveStyle:'hold', lrHint:true, lrBlock:true, mouseMove:false, full:true };
 const S = Object.assign({}, DEF);
 try { Object.assign(S, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) {}
@@ -320,7 +330,20 @@ const SP = {
 let sp = SP[S.sport] || SP.soccer;
 
 /* ---------- 그림 (SVG) ---------- */
-const SKIN = 'url(#gSkin)', HAIR = 'url(#gHair)';
+const SKIN = 'url(#gSkin)';
+/* 고를 수 있는 선수들 (자체 디자인) */
+const CHARS = [
+  { id:'f1', name:'하늘', sex:'f', hair:'#8a5637', band:'#f6c445' },
+  { id:'m1', name:'바다', sex:'m', hair:'#3f2e28' },
+  { id:'f2', name:'노을', sex:'f', hair:'#2f2622', band:'#ef6f6c', tail:false },
+  { id:'m2', name:'도토리', sex:'m', hair:'#8a5a34' },
+  { id:'f3', name:'보리', sex:'f', hair:'#c08a4e', band:'#5fb3a8' },
+  { id:'m3', name:'솔', sex:'m', hair:'#1f1b1b' }
+];
+const pickFrom = l => l[Math.random() * l.length | 0];
+let mixCh = pickFrom(CHARS), opCh = null;
+const plChar = () => CHARS.find(c => c.id === S.char) || mixCh;
+const opChar = () => { const p = plChar(); if (!opCh || opCh.sex === p.sex) opCh = pickFrom(CHARS.filter(c => c.sex !== p.sex)); return opCh; };
 function itemSVG(item) {
   if (item === 'racket') return `<g transform="translate(0,72)"><rect x="-3" y="0" width="6" height="36" rx="2" fill="#5d4037"/>
     <ellipse cx="0" cy="62" rx="18" ry="26" fill="rgba(255,255,255,.15)" stroke="#eceff1" stroke-width="4"/>
@@ -353,22 +376,39 @@ function personSVG(p, o) {
     : `<ellipse cy="74" rx="4.4" ry="6.6" fill="${SKIN}"/>`;
   const arm = (id, extra = '') => `<g id="${p}${id}"><path d="${armD}" fill="${SKIN}"/>
      ${vol(sleeveD, o.color)}<path d="M-7.2 17.5 Q0 20.5 7.2 17.5" stroke="rgba(255,255,255,.8)" stroke-width="1.8" fill="none"/>${hand}${extra}</g>`;
-  const torsoD = 'M-12 -181 Q-24 -180 -25.5 -171 L-23 -156 Q-17.5 -141 -16 -128 L-17.5 -113 L17.5 -113 L16 -128 Q17.5 -141 23 -156 L25.5 -171 Q24 -180 12 -181 Q0 -176 -12 -181 Z';
+  const wst = o.sex === 'f' ? 13.6 : 16;
+  const torsoD = `M-12 -181 Q-24 -180 -25.5 -171 L-23 -156 Q-17.5 -141 -${wst} -128 L-17.5 -113 L17.5 -113 L${wst} -128 Q17.5 -141 23 -156 L25.5 -171 Q24 -180 12 -181 Q0 -176 -12 -181 Z`;
   const shortsD = 'M-17.5 -117 L17.5 -117 L20.5 -86 L2.5 -86 L0 -99 L-2.5 -86 L-20.5 -86 Z';
-  const headD = 'M-10.4 -205 C-10.4 -220 10.4 -220 10.4 -205 C10.4 -196.5 5.2 -189 0 -189 C-5.2 -189 -10.4 -196.5 -10.4 -205 Z';
-  const ears = `<ellipse cx="-10.6" cy="-202.5" rx="1.7" ry="2.8" fill="${SKIN}"/><ellipse cx="10.6" cy="-202.5" rx="1.7" ry="2.8" fill="${SKIN}"/>`;
+  /* 얼굴·머리: 부드러운 손그림 애니메이션 느낌(둥근 얼굴, 큰 눈, 발그레한 볼, 자연스러운 갈색 머리).
+     특정 작품의 인물을 본뜨지 않은 자체 디자인입니다. 여자(f)는 단발 + 묶은 머리, 남자(m)는 짧은 더벅머리. */
+  const F = o.sex === 'f', HAIR = o.hair || (F ? '#8a5637' : '#3f2e28'), LINE = '#6b4a3a';
+  const headD = 'M-11.5 -204 C-11.5 -220 11.5 -220 11.5 -204 C11.5 -195 6 -189 0 -189 C-6 -189 -11.5 -195 -11.5 -204 Z';
+  const ears = F ? '' : `<ellipse cx="-11.6" cy="-202" rx="1.8" ry="2.9" fill="${SKIN}"/><ellipse cx="11.6" cy="-202" rx="1.8" ry="2.9" fill="${SKIN}"/>`;
+  const band = o.band || '#f6c445';
+  const eye = (x, hl) => `<ellipse cx="${x}" cy="-202" rx="${F ? 2.1 : 1.9}" ry="${F ? 3 : 2.6}" fill="#3b2a22"/><circle cx="${x + hl}" cy="-203.2" r=".85" fill="#fff"/><circle cx="${x - hl}" cy="-200.6" r=".4" fill="#fff" opacity=".7"/>`;
   const head = o.face
-    ? `${ears}<path d="${headD}" fill="url(#gHead)"/>
-       <circle cx="-6.6" cy="-197.6" r="2.1" fill="#ff8a80" opacity=".35"/><circle cx="6.6" cy="-197.6" r="2.1" fill="#ff8a80" opacity=".35"/>
-       <path d="M-11.3 -202 C-13.5 -222 13.5 -222 11.3 -202 C10 -208 7 -211.5 3 -212.5 C-2 -209.5 -8 -208 -11.3 -202 Z" fill="${HAIR}"/>
-       <path d="M-5 -214.5 q5 -3 10 -.5" stroke="rgba(255,255,255,.25)" stroke-width="1.6" fill="none" stroke-linecap="round"/>
-       <ellipse cx="-4.3" cy="-202.6" rx="1.7" ry="2.3" fill="#2a1a16"/><ellipse cx="4.3" cy="-202.6" rx="1.7" ry="2.3" fill="#2a1a16"/>
-       <circle cx="-3.7" cy="-203.4" r=".7" fill="#fff"/><circle cx="4.9" cy="-203.4" r=".7" fill="#fff"/>
-       <path d="M-6.4 -206.6 q2.2 -1.3 4.4 -.3 M6.4 -206.6 q-2.2 -1.3 -4.4 -.3" stroke="#3e2723" stroke-width="1" fill="none" stroke-linecap="round"/>
-       <path d="M0 -200.5 l-.9 2.6 h1.6" stroke="#c08552" stroke-width=".8" fill="none" stroke-linecap="round"/>
-       <path d="M-3 -194.6 q3 2.4 6 0" stroke="#b3493f" stroke-width="1.3" fill="none" stroke-linecap="round"/>`
+    ? `${F ? `<path d="M-12.6 -208 C-16.5 -196 -15 -186 -10.5 -183 C-10 -190 -10.5 -197 -9 -204 Z M12.6 -208 C16.5 -196 15 -186 10.5 -183 C10 -190 10.5 -197 9 -204 Z" fill="${HAIR}"/>` : ''}${ears}
+       <path d="${headD}" fill="url(#gHead)" stroke="${LINE}" stroke-width=".6" stroke-opacity=".55"/>
+       <ellipse cx="-7" cy="-197" rx="2.6" ry="1.7" fill="#ff9e8f" opacity=".45"/><ellipse cx="7" cy="-197" rx="2.6" ry="1.7" fill="#ff9e8f" opacity=".45"/>
+       ${F
+         ? `<path d="M-12.6 -201 C-15.8 -224.5 15.8 -224.5 12.6 -201 C11.6 -207 9 -211 5 -212.5 C1 -208 -6 -205.5 -12.6 -201 Z" fill="${HAIR}"/>
+            <path d="M-11.2 -211.5 Q0 -219.5 11.2 -211.5" stroke="${band}" stroke-width="2.2" fill="none" stroke-linecap="round"/>`
+         : `<path d="M-12.4 -201 C-15.5 -224.5 15.5 -224.5 12.4 -201 C11.2 -207 9.6 -209 8 -210.5 L6 -206.3 L3.5 -211 L1 -206.3 L-2 -211 L-4.5 -206.8 L-7.5 -210.5 C-10 -208.5 -11.5 -206 -12.4 -201 Z" fill="${HAIR}"/>`}
+       <path d="M-6 -215 q6 -3.5 12 -.5" stroke="rgba(255,255,255,.28)" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+       ${eye(-4.6, .6)}${eye(4.6, .6)}
+       <path d="M-7.2 -205.2 q2.6 -1.8 5 -.4 M7.2 -205.2 q-2.6 -1.8 -5 -.4" stroke="${LINE}" stroke-width="${F ? .9 : 1.1}" fill="none" stroke-linecap="round"/>
+       ${F ? `<path d="M-7 -203.6 l-1.5 -1 M7 -203.6 l1.5 -1" stroke="${LINE}" stroke-width=".8" stroke-linecap="round"/>` : ''}
+       <path d="M-.4 -198.6 q.6 .8 1.2 0" stroke="#c98d6a" stroke-width=".8" fill="none" stroke-linecap="round"/>
+       <path d="M-2.8 -194.4 q2.8 2.2 5.6 0" stroke="#b3493f" stroke-width="1.2" fill="none" stroke-linecap="round"/>`
+    : F
+    ? `<path d="M-12.6 -206 C-15.5 -192 -12.5 -185 -8 -184.5 L8 -184.5 C12.5 -185 15.5 -192 12.6 -206 Z" fill="${HAIR}"/>
+       <path d="${headD}" fill="${HAIR}"/>
+       <path d="M-11.2 -211.5 Q0 -219.5 11.2 -211.5" stroke="${band}" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+       ${o.tail === false ? '' : `<path d="M-4.2 -204 C-7.5 -194 -6.5 -180 0 -169 C6.5 -180 7.5 -194 4.2 -204 Z" fill="${HAIR}" stroke="rgba(0,0,0,.25)" stroke-width=".6"/>
+       <rect x="-4.6" y="-206.5" width="9.2" height="4" rx="2" fill="${band}"/>`}
+       <path d="M-1 -198 q-1.5 12 1 24" stroke="rgba(255,255,255,.2)" stroke-width="1.4" fill="none" stroke-linecap="round"/>`
     : `${ears}<path d="${headD}" fill="${HAIR}"/>
-       <path d="M-8.5 -194 L-6 -188.5 L-4 -191.5 L-2 -187.8 L0 -191 L2 -187.8 L4 -191.5 L6 -188.5 L8.5 -194 Z" fill="${HAIR}"/>
+       <path d="M-9 -194 L-6.3 -188.3 L-4.2 -191.5 L-2 -187.6 L0 -191 L2 -187.6 L4.2 -191.5 L6.3 -188.3 L9 -194 Z" fill="${HAIR}"/>
        <path d="M-6 -211 q6 -4.5 12 0 M-4 -206 q4 -2.5 8 0" stroke="rgba(255,255,255,.22)" stroke-width="1.8" fill="none" stroke-linecap="round"/>`;
   return `<g id="${p}">
     ${leg('LegL', -9)}${leg('LegR', 9)}
@@ -596,8 +636,8 @@ function buildScene() {
   $('bgLayer').innerHTML = b.bg;
   $('frontLayer').innerHTML = b.front;
   $('spin').innerHTML = ballSVG[S.sport];
-  $('playerLayer').innerHTML = personSVG('pl', { color:S.team, item:sp.player.item, face:false, num:10 });
-  $('oppLayer').innerHTML = personSVG('op', { color:sp.opp.color, item:sp.opp.item, face:true, gloves:sp.opp.gloves });
+  $('playerLayer').innerHTML = personSVG('pl', { color:S.team, item:sp.player.item, face:false, num:10, ...plChar() });
+  $('oppLayer').innerHTML = personSVG('op', { color:sp.opp.color, item:sp.opp.item, face:true, gloves:sp.opp.gloves, ...opChar() });
   $('oppLayer').style.display = S.opp === 'none' && !isRecv() ? 'none' : '';
   // 표시 영역 + 직접 고르기 기둥
   const zs = sp.zones, b1 = (zs[0][0] + zs[1][0]) / 2, b2 = (zs[1][0] + zs[2][0]) / 2;
@@ -933,7 +973,7 @@ function startReady() {
 }
 let gen = 0;   // 처음 화면으로 가면 진행 중이던 동작을 멈추기 위한 번호
 function startGame() {
-  state = 'busy'; ac(); gen++; goFull();
+  state = 'busy'; ac(); gen++; goFull(); mixCh = pickFrom(CHARS.filter(c => c.sex !== mixCh.sex)); opCh = null;
   $('title').classList.add('hide'); $('stage').classList.remove('title-on');
   buildScene(); hideMsg();
   speak(`${who()}${sp.name} 놀이를 시작해요!`);
@@ -1221,7 +1261,7 @@ addEventListener('keyup', e => {
   inputUp('key');
 });
 addEventListener('pointerdown', e => {
-  if (settingsOpen || e.target.closest('.holdBtn') || e.target.closest('.card') || e.target.closest('.lvl')) return;
+  if (settingsOpen || e.target.closest('.holdBtn') || e.target.closest('.card') || e.target.closest('.lvl') || e.target.closest('.chr')) return;
   e.preventDefault();
   if (canMove() && !S.mouseMove) {       // 화면 왼쪽/오른쪽 = 이동, 가운데 = 슛 (익히기에서는 가운데로 이동)
     const r = $('stage').getBoundingClientRect(), rx = (e.clientX - r.left) / r.width;
@@ -1335,10 +1375,18 @@ function loop(now) {
 
 /* ---------- 시작 화면 카드 ---------- */
 function renderCards() {
+  $('chars').innerHTML = `<button class="chr ${CHARS.some(c => c.id === S.char) ? '' : 'sel'}" data-char="mix" aria-label="선수 섞어서"><i>🎲</i>섞어서</button>` +
+    CHARS.map(c => `<button class="chr ${c.id === S.char ? 'sel' : ''}" data-char="${c.id}" aria-label="${c.name} 선수"><svg viewBox="-27 -223 54 50">${personSVG('pv' + c.id, { color:S.team, face:true, ...c })}</svg>${c.name}</button>`).join('');
   $('cards').innerHTML = Object.entries(SP).map(([k, v]) => `<button class="card ${k === S.sport ? 'sel' : ''}" data-sport="${k}"><span>${v.icon}</span>${v.name}</button>`).join('');
   const LVB = [['simple', '1단계', '누르기'], ['move', '2단계', '움직이며 누르기'], ['receive', '3단계', '공 받기'], ['rally', '4단계', '받고 공격'], ['lr', '방향', '왼쪽·오른쪽 익히기'], ['scan', '스위치', '스캔'], ['direct', '보조기기', '직접 고르기']];
   $('levels').innerHTML = LVB.map(([m, a, b]) => `<button class="lvl ${m === S.mode ? 'sel' : ''}" data-mode="${m}"><b>${a}</b>${b}</button>`).join('');
 }
+$('chars').addEventListener('pointerdown', e => {
+  const c = e.target.closest('.chr'); if (!c || settingsOpen) return;
+  e.preventDefault(); e.stopPropagation();
+  S.char = c.dataset.char; opCh = null; saveS(); syncForm(); renderCards(); buildScene();
+  const ch = CHARS.find(x => x.id === S.char); speak(ch ? ch.name + ' 선수' : '선수를 섞어서 나와요');
+});
 $('levels').addEventListener('pointerdown', e => {
   const c = e.target.closest('.lvl'); if (!c || settingsOpen) return;
   e.preventDefault(); e.stopPropagation();
@@ -1371,7 +1419,7 @@ function closeSettings() {
   if (state === 'serveWait' || (state === 'ready' && !(S.mode === 'rally' && rallyOpp >= 0))) startReady();
   else if (state === 'ready') setBanner();
 }
-const FIELDS = ['sport', 'mode', 'scanMs', 'opp', 'motion', 'trigger', 'hold', 'debounce', 'dwell', 'pause', 'ratio', 'name', 'team', 'sound', 'voice', 'reduce', 'recvMs', 'autoLevel', 'lrKinds', 'lrMax', 'moveStyle', 'lrHint', 'lrBlock', 'mouseMove', 'full'];
+const FIELDS = ['sport', 'mode', 'scanMs', 'opp', 'motion', 'trigger', 'hold', 'debounce', 'dwell', 'pause', 'ratio', 'name', 'team', 'sound', 'voice', 'reduce', 'recvMs', 'autoLevel', 'lrKinds', 'lrMax', 'moveStyle', 'lrHint', 'lrBlock', 'mouseMove', 'full', 'char'];
 const fmt = {
   scanMs: v => (v / 1000).toFixed(1) + '초', hold: v => v == 0 ? '바로' : (v / 1000).toFixed(1) + '초',
   debounce: v => (v / 1000).toFixed(1) + '초', dwell: v => v == 0 ? '끔' : (v / 1000).toFixed(2).replace(/0$/, '') + '초',
@@ -1389,7 +1437,8 @@ FIELDS.forEach(k => {
     S[k] = v; saveS();
     if (fmt[k]) $('o_' + k).textContent = fmt[k](v);
     if (k === 'mode') { lrM = null; showRecvMark(0, 0, false); }
-    if (['sport', 'team', 'opp', 'reduce', 'mode', 'lrMax', 'lrHint'].includes(k)) { if (state === 'title' || state === 'ready' || state === 'serveWait') buildScene(); else needBuild = true; }
+    if (k === 'char') renderCards();
+    if (['sport', 'team', 'char', 'opp', 'reduce', 'mode', 'lrMax', 'lrHint'].includes(k)) { if (state === 'title' || state === 'ready' || state === 'serveWait') buildScene(); else needBuild = true; }
     if (k === 'mode') { levelWins = 0; rallyOpp = -1; updateZonesVisibility(); highlight(-1); cols(-1); setRing(0); renderCards(); }
     if (k === 'ratio') layout();
     if (k === 'sport' && state !== 'title') { score = 0; shots = 0; updateHUD(); }
