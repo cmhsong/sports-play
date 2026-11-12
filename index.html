@@ -7,9 +7,11 @@
 <!-- 공개 애니메이션 라이브러리 (GitHub 오픈소스)
      - Animate.css  : https://github.com/animate-css/animate.css  (MIT)
      - canvas-confetti : https://github.com/catdad/canvas-confetti (ISC)
+     - simplex-noise : https://github.com/jwagner/simplex-noise.js (MIT) — 잔디·마루·매트 질감
      libs 폴더의 파일을 먼저 쓰고, 없으면 CDN에서 불러옵니다. -->
 <link rel="stylesheet" href="libs/animate.min.css" onerror="this.onerror=null;this.href='https://cdn.jsdelivr.net/npm/animate.css@4.1.1/animate.min.css'">
 <script src="libs/confetti.browser.min.js" onerror="var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js';document.head.appendChild(s);"></script>
+<script src="libs/simplex-noise.min.js" onerror="var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/simplex-noise@2.4.0/simplex-noise.min.js';s.onload=function(){dispatchEvent(new Event('noise-ready'))};document.head.appendChild(s);"></script>
 <style>
 :root{--u:6px;--accent:#ffd600;--ink:#1b1b1b;--panel:#fff;--muted:#5f6368;--line:#dadce0}
 *{box-sizing:border-box}
@@ -44,6 +46,16 @@ html,body{margin:0;height:100%;background:#000;overflow:hidden;
   background:rgba(0,0,0,.4);color:#fff;font-size:calc(var(--u)*9);display:flex;align-items:center;justify-content:center;border:4px solid rgba(255,255,255,.55);transition:background .15s,transform .15s}
 #mvL{left:calc(var(--u)*2.5)} #mvR{right:calc(var(--u)*2.5)}
 #movePad span.act{background:rgba(255,214,0,.75);color:#222;transform:translateY(-50%) scale(1.08)}
+#movePad #mvC{left:calc(50% - var(--u)*8.5);display:none;font-size:calc(var(--u)*3.4);font-weight:800}
+#movePad.center #mvC{display:flex}
+#movePad span.hint{border-color:#ffd600;box-shadow:0 0 0 calc(var(--u)*1) rgba(255,214,0,.5);animation:padHint 1s ease-in-out infinite}
+@keyframes padHint{50%{background:rgba(255,214,0,.6);color:#222}}
+.reduce #movePad span.hint{animation:none;background:rgba(255,214,0,.45)}
+#banner .big{display:block;font-size:1.7em;line-height:1.2}
+#banner .dots{display:block;color:var(--accent);letter-spacing:.25em;font-size:1.2em}
+.cell{fill:rgba(255,255,255,.4);stroke:rgba(0,0,0,.35);stroke-width:2}
+.cell.mid{fill:rgba(100,181,246,.9);stroke:#fff}
+.cellLbl{font-weight:900;font-size:26px;fill:#fff;stroke:rgba(0,0,0,.6);stroke-width:5px;paint-order:stroke}
 .topBtns{position:absolute;top:calc(var(--u)*2);right:calc(var(--u)*2);display:flex;gap:calc(var(--u)*1.2);z-index:5}
 .title-on #homeBtn{display:none}
 .holdBtn{border:none;border-radius:999px;cursor:pointer;
@@ -114,6 +126,13 @@ html,body{margin:0;height:100%;background:#000;overflow:hidden;
 <div id="wrap">
   <div id="stage">
     <svg id="scene" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 620" preserveAspectRatio="xMidYMid meet">
+      <defs>
+        <linearGradient id="gSkin" x1="0" x2="1"><stop offset="0" stop-color="#ffe0b8"/><stop offset=".5" stop-color="#f1c27d"/><stop offset="1" stop-color="#c58a4c"/></linearGradient>
+        <linearGradient id="gCyl" x1="0" x2="1"><stop offset="0" stop-color="#fff" stop-opacity=".36"/><stop offset=".45" stop-color="#fff" stop-opacity="0"/><stop offset=".55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".38"/></linearGradient>
+        <radialGradient id="gHead" cx=".38" cy=".32" r=".8"><stop offset="0" stop-color="#ffe8cc"/><stop offset=".6" stop-color="#f1c27d"/><stop offset="1" stop-color="#c58a4c"/></radialGradient>
+        <radialGradient id="gHair" cx=".35" cy=".25" r=".9"><stop offset="0" stop-color="#7a5444"/><stop offset=".5" stop-color="#3e2723"/><stop offset="1" stop-color="#1c100d"/></radialGradient>
+        <radialGradient id="gBall" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#fff" stop-opacity=".4"/><stop offset=".3" stop-color="#fff" stop-opacity="0"/><stop offset=".6" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".4"/></radialGradient>
+      </defs>
       <g id="bgLayer"></g>
       <g id="oppLayer"></g>
       <g id="frontLayer"></g>
@@ -132,7 +151,7 @@ html,body{margin:0;height:100%;background:#000;overflow:hidden;
       <button id="homeBtn" class="holdBtn" title="길게 누르면 처음 화면으로 가요 (Home 키)">🏠 처음으로</button>
       <button id="setBtn" class="holdBtn" title="길게 누르면 설정이 열려요 (F2)">⚙ 선생님 설정 (길게 누르기)</button>
     </div>
-    <div id="movePad"><span id="mvL">◀</span><span id="mvR">▶</span></div>
+    <div id="movePad"><span id="mvL">◀</span><span id="mvC">가운데</span><span id="mvR">▶</span></div>
     <div id="msg"></div>
     <div id="banner" class="off"><div id="bannerText"></div><div id="hold"><i></i></div></div>
 
@@ -162,6 +181,9 @@ html,body{margin:0;height:100%;background:#000;overflow:hidden;
           <option value="receive">3단계 · 상대 공 받기 — 공이 오는 곳(노란 동그라미)으로 이동</option>
           <option value="rally">4단계 · 받고 공격하기 — 받은 뒤 상대가 없는 빈 곳으로</option>
           </optgroup>
+          <optgroup label="방향 익히기">
+          <option value="lr">왼쪽·오른쪽 익히기 — "왼쪽으로 2번", "오른쪽으로 3번", "가운데로" 이동</option>
+          </optgroup>
           <optgroup label="스위치·보조기기용">
           <option value="scan">스캔 — 노란 표시가 돌 때 누르기 (스위치 1개)</option>
           <option value="direct">직접 고르기 — 왼/가운데/오른쪽 누르기 · 머무르기 (헤드마우스·시선)</option>
@@ -171,6 +193,22 @@ html,body{margin:0;height:100%;background:#000;overflow:hidden;
         <input type="range" id="scanMs" min="800" max="6000" step="100"><span class="hint">길수록 천천히 움직여요</span></div>
       <div class="f"><label for="opp">상대 선수 (막는 정도)</label>
         <select id="opp"><option value="none">없음 — 항상 성공</option><option value="easy">쉬움 (거의 성공)</option><option value="normal">보통</option><option value="hard">어려움</option></select></div>
+
+      <div class="sec">왼쪽·오른쪽 익히기와 이동 방법</div>
+      <div class="f"><label for="lrKinds">낼 문제 (왼쪽·오른쪽 익히기)</label>
+        <select id="lrKinds"><option value="all">왼쪽 · 오른쪽 · 가운데 모두</option><option value="lr">왼쪽 · 오른쪽</option><option value="left">왼쪽만</option><option value="right">오른쪽만</option></select>
+        <span class="hint">한쪽만 고르면 문제마다 가운데에서 다시 시작해요</span></div>
+      <div class="f"><label for="lrMax">가장 많이 이동하는 횟수 <output id="o_lrMax"></output></label>
+        <input type="range" id="lrMax" min="1" max="5" step="1"><span class="hint">"왼쪽으로 ○번"에서 나오는 가장 큰 수 (가운데에서 양쪽으로 가는 칸 수)</span></div>
+      <div class="f"><label for="moveStyle">2~4단계 이동 방법</label>
+        <select id="moveStyle"><option value="hold">누르고 있는 동안 계속 이동</option><option value="step">한 번 누르면 한 칸 이동 (왼쪽·가운데·오른쪽)</option></select>
+        <span class="hint">왼쪽·오른쪽 익히기는 항상 한 번에 한 칸씩 움직여요</span></div>
+      <div class="f"><span class="hint">이동: ← → 방향키(A·D) · 화면 왼쪽/오른쪽 누르기 · 게임패드<br>가운데로: ↑ ↓ 방향키 · 스페이스 · 화면 가운데 누르기</span></div>
+      <div class="checks">
+        <label><input type="checkbox" id="lrHint"> 가야 할 곳·방향 힌트 보여주기</label>
+        <label><input type="checkbox" id="lrBlock"> 틀린 방향은 움직이지 않기 (실수 없이 배우기)</label>
+        <label><input type="checkbox" id="mouseMove"> 마우스를 움직이면 선수가 따라가기</label>
+      </div>
 
       <div class="sec">움직임과 터치 반응</div>
       <div class="f"><label for="motion">동작 속도 (공·선수 움직임) <output id="o_motion"></output></label>
@@ -210,7 +248,8 @@ html,body{margin:0;height:100%;background:#000;overflow:hidden;
     <div class="credit">
       입력: 마우스 클릭 · 터치 · 키보드 아무 키 · 스위치 인터페이스(키/클릭으로 인식되는 장치) · 게임패드 버튼<br>
       애니메이션: <a href="https://github.com/animate-css/animate.css" target="_blank" rel="noopener">Animate.css</a> (MIT) ·
-      <a href="https://github.com/catdad/canvas-confetti" target="_blank" rel="noopener">canvas-confetti</a> (ISC)
+      <a href="https://github.com/catdad/canvas-confetti" target="_blank" rel="noopener">canvas-confetti</a> (ISC)<br>
+      운동장 질감(잔디·마루·매트): <a href="https://github.com/jwagner/simplex-noise.js" target="_blank" rel="noopener">simplex-noise</a> (MIT)
     </div>
   </div>
 </div>
@@ -232,7 +271,7 @@ const ease = {
 function tween(ms, fn, e = ease.inOut) {
   return new Promise(res => {
     const s = performance.now();
-    const f = n => { const t = Math.min(1, (n - s) / Math.max(1, ms)); fn(e(t), t); t < 1 ? requestAnimationFrame(f) : res(); };
+    const f = n => { const t = Math.max(0, Math.min(1, (n - s) / Math.max(1, ms))); fn(e(t), t); t < 1 ? requestAnimationFrame(f) : res(); };
     requestAnimationFrame(f);
   });
 }
@@ -240,7 +279,8 @@ function tween(ms, fn, e = ease.inOut) {
 /* ---------- 설정 ---------- */
 const KEY = 'sportplay.v1';
 const DEF = { sport:'soccer', mode:'simple', scanMs:2000, opp:'easy', motion:0.8, trigger:'down', hold:0, debounce:800,
-  dwell:0, pause:2800, ratio:'auto', name:'', team:'#e53935', sound:true, voice:true, reduce:false, recvMs:4500, autoLevel:true };
+  dwell:0, pause:2800, ratio:'auto', name:'', team:'#e53935', sound:true, voice:true, reduce:false, recvMs:4500, autoLevel:true,
+  lrKinds:'all', lrMax:3, moveStyle:'hold', lrHint:true, lrBlock:true, mouseMove:false };
 const S = Object.assign({}, DEF);
 try { Object.assign(S, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) {}
 // 주소로 바로 지정 가능: index.html?sport=volley&mode=direct&ratio=4:3
@@ -272,7 +312,7 @@ const SP = {
 let sp = SP[S.sport] || SP.soccer;
 
 /* ---------- 그림 (SVG) ---------- */
-const SKIN = '#f1c27d', HAIR = '#3e2723';
+const SKIN = 'url(#gSkin)', HAIR = 'url(#gHair)';
 function itemSVG(item) {
   if (item === 'racket') return `<g transform="translate(0,72)"><rect x="-3" y="0" width="6" height="36" rx="2" fill="#5d4037"/>
     <ellipse cx="0" cy="62" rx="18" ry="26" fill="rgba(255,255,255,.15)" stroke="#eceff1" stroke-width="4"/>
@@ -281,112 +321,246 @@ function itemSVG(item) {
     <circle cx="0" cy="38" r="21" fill="#d32f2f" stroke="#222" stroke-width="2.5"/></g>`;
   return '';
 }
-/* 6등신 선수: 전체 키 216 = 머리(36) × 6
-   머리 -216~-180 · 어깨 -168 · 허리 -112 · 엉덩이 -104 · 무릎 -56 · 발 0 */
+/* 8등신 선수 (입체 음영): 전체 키 216 = 머리(27) × 8
+   정수리 -216 · 턱 -189 · 어깨 -180 · 가슴 -162 · 허리 -135 · 엉덩이 -108 · 무릎 -56 · 발 0
+   모든 면 위에 gCyl(왼쪽 빛·오른쪽 그림자) 그라데이션을 덧씌워 둥근 입체감을 냅니다. */
+const vol = (d, fill) => `<path d="${d}" fill="${fill}"/><path d="${d}" fill="url(#gCyl)"/>`;
 function personSVG(p, o) {
-  const leg = (id, cx) => `<g id="${p}${id}">
-     <path d="M${cx - 7.5} -104 L${cx + 7.5} -104 L${cx + 6} -56 L${cx + 5} -10 L${cx - 5} -10 L${cx - 6} -56 Z" fill="${SKIN}"/>
-     <rect x="${cx - 6.5}" y="-44" width="13" height="36" rx="3" fill="${o.sock || '#fafafa'}"/>
-     <rect x="${cx - 6.5}" y="-44" width="13" height="5" fill="${o.color}"/>
-     <path d="M${cx - 8} -10 h16 q6 0 6 6 v2 h-28 v-2 q0 -6 6 -6z" fill="#212121"/></g>`;
-  const hand = o.gloves ? `<circle cy="77" r="10" fill="#fff59d" stroke="#333" stroke-width="2"/>` : `<circle cy="75" r="6.5" fill="${SKIN}"/>`;
-  const arm = (id, extra = '') => `<g id="${p}${id}">
-     <path d="M-5.5 0 L5.5 0 L4.5 38 L4 72 L-4 72 L-4.5 38 Z" fill="${SKIN}"/>
-     <rect x="-8" y="-6" width="16" height="26" rx="6" fill="${o.color}"/>${hand}${extra}</g>`;
+  const leg = (id, cx) => {
+    const L = `M${cx - 8} -110 L${cx + 8} -110 C${cx + 8.5} -86 ${cx + 6} -68 ${cx + 5.2} -56 C${cx + 6.8} -44 ${cx + 5} -22 ${cx + 3.3} -9 L${cx - 3.3} -9 C${cx - 5} -22 ${cx - 6.8} -44 ${cx - 5.2} -56 C${cx - 6} -68 ${cx - 8.5} -86 ${cx - 8} -110 Z`;
+    const sock = `M${cx - 6.3} -46 L${cx + 6.3} -46 C${cx + 6} -36 ${cx + 4.8} -20 ${cx + 3.5} -9 L${cx - 3.5} -9 C${cx - 4.8} -20 ${cx - 6} -36 ${cx - 6.3} -46 Z`;
+    const shoe = `M${cx - 4.5} -11 h9 q5.5 1.5 6.5 6 v3 q0 2 -2 2 h-19 q-2 0 -2 -2 v-3 q1 -4.5 7.5 -6 z`;
+    return `<g id="${p}${id}"><path d="${L}" fill="${SKIN}"/>
+      <path d="M${cx - 4} -58 q4 3 8 0" stroke="rgba(120,70,30,.35)" stroke-width="1" fill="none"/>
+      ${vol(sock, o.sock || '#fafafa')}
+      <rect x="${cx - 6.4}" y="-47.5" width="12.8" height="4.6" rx="1.5" fill="${o.color}"/>
+      ${vol(shoe, '#1f2933')}
+      <rect x="${cx - 12}" y="-2.2" width="23" height="2.4" rx="1.2" fill="#eceff1"/>
+      <path d="M${cx - 6} -7 h8" stroke="${o.color}" stroke-width="1.8" stroke-linecap="round"/></g>`;
+  };
+  const armD = 'M-5.6 0 C-6.2 14 -4.6 27 -4.3 36 C-5.2 47 -4.2 60 -3.1 69 L3.1 69 C4.2 60 5.2 47 4.3 36 C4.6 27 6.2 14 5.6 0 Z';
+  const sleeveD = 'M-8 -5 Q-8 -10 0 -10 Q8 -10 8 -5 L7.2 19 Q0 22 -7.2 19 Z';
+  const hand = o.gloves
+    ? `<ellipse cy="76" rx="8.5" ry="10.5" fill="#fff176" stroke="#5d4037" stroke-width="1.6"/><ellipse cy="76" rx="8.5" ry="10.5" fill="url(#gCyl)"/>`
+    : `<ellipse cy="74" rx="4.4" ry="6.6" fill="${SKIN}"/>`;
+  const arm = (id, extra = '') => `<g id="${p}${id}"><path d="${armD}" fill="${SKIN}"/>
+     ${vol(sleeveD, o.color)}<path d="M-7.2 17.5 Q0 20.5 7.2 17.5" stroke="rgba(255,255,255,.8)" stroke-width="1.8" fill="none"/>${hand}${extra}</g>`;
+  const torsoD = 'M-12 -181 Q-24 -180 -25.5 -171 L-23 -156 Q-17.5 -141 -16 -128 L-17.5 -113 L17.5 -113 L16 -128 Q17.5 -141 23 -156 L25.5 -171 Q24 -180 12 -181 Q0 -176 -12 -181 Z';
+  const shortsD = 'M-17.5 -117 L17.5 -117 L20.5 -86 L2.5 -86 L0 -99 L-2.5 -86 L-20.5 -86 Z';
+  const headD = 'M-10.4 -205 C-10.4 -220 10.4 -220 10.4 -205 C10.4 -196.5 5.2 -189 0 -189 C-5.2 -189 -10.4 -196.5 -10.4 -205 Z';
+  const ears = `<ellipse cx="-10.6" cy="-202.5" rx="1.7" ry="2.8" fill="${SKIN}"/><ellipse cx="10.6" cy="-202.5" rx="1.7" ry="2.8" fill="${SKIN}"/>`;
   const head = o.face
-    ? `<ellipse cy="-198" rx="15" ry="18" fill="${SKIN}"/>
-       <path d="M-15.5 -200a15.5 18 0 0 1 31 0q-15 -9 -31 0z" fill="${HAIR}"/>
-       <ellipse cx="-15" cy="-197" rx="2.5" ry="4" fill="${SKIN}"/><ellipse cx="15" cy="-197" rx="2.5" ry="4" fill="${SKIN}"/>
-       <circle cx="-5.5" cy="-197" r="2.2" fill="#222"/><circle cx="5.5" cy="-197" r="2.2" fill="#222"/>
-       <path d="M-5 -188q5 4 10 0" stroke="#222" stroke-width="2" fill="none" stroke-linecap="round"/>`
-    : `<ellipse cy="-198" rx="15" ry="18" fill="${HAIR}"/>
-       <ellipse cx="-15" cy="-196" rx="2.8" ry="4.5" fill="${SKIN}"/><ellipse cx="15" cy="-196" rx="2.8" ry="4.5" fill="${SKIN}"/>`;
+    ? `${ears}<path d="${headD}" fill="url(#gHead)"/>
+       <circle cx="-6.6" cy="-197.6" r="2.1" fill="#ff8a80" opacity=".35"/><circle cx="6.6" cy="-197.6" r="2.1" fill="#ff8a80" opacity=".35"/>
+       <path d="M-11.3 -202 C-13.5 -222 13.5 -222 11.3 -202 C10 -208 7 -211.5 3 -212.5 C-2 -209.5 -8 -208 -11.3 -202 Z" fill="${HAIR}"/>
+       <path d="M-5 -214.5 q5 -3 10 -.5" stroke="rgba(255,255,255,.25)" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+       <ellipse cx="-4.3" cy="-202.6" rx="1.7" ry="2.3" fill="#2a1a16"/><ellipse cx="4.3" cy="-202.6" rx="1.7" ry="2.3" fill="#2a1a16"/>
+       <circle cx="-3.7" cy="-203.4" r=".7" fill="#fff"/><circle cx="4.9" cy="-203.4" r=".7" fill="#fff"/>
+       <path d="M-6.4 -206.6 q2.2 -1.3 4.4 -.3 M6.4 -206.6 q-2.2 -1.3 -4.4 -.3" stroke="#3e2723" stroke-width="1" fill="none" stroke-linecap="round"/>
+       <path d="M0 -200.5 l-.9 2.6 h1.6" stroke="#c08552" stroke-width=".8" fill="none" stroke-linecap="round"/>
+       <path d="M-3 -194.6 q3 2.4 6 0" stroke="#b3493f" stroke-width="1.3" fill="none" stroke-linecap="round"/>`
+    : `${ears}<path d="${headD}" fill="${HAIR}"/>
+       <path d="M-8.5 -194 L-6 -188.5 L-4 -191.5 L-2 -187.8 L0 -191 L2 -187.8 L4 -191.5 L6 -188.5 L8.5 -194 Z" fill="${HAIR}"/>
+       <path d="M-6 -211 q6 -4.5 12 0 M-4 -206 q4 -2.5 8 0" stroke="rgba(255,255,255,.22)" stroke-width="1.8" fill="none" stroke-linecap="round"/>`;
   return `<g id="${p}">
-    ${leg('LegL', -10)}${leg('LegR', 10)}
-    <path d="M-21 -118 L21 -118 L24 -84 L3 -84 L0 -97 L-3 -84 L-24 -84 Z" fill="#263238"/>
+    ${leg('LegL', -9)}${leg('LegR', 9)}
+    ${vol(shortsD, '#263238')}
+    <path d="M-20 -89 h17 M3 -89 h17" stroke="rgba(255,255,255,.55)" stroke-width="1.6"/>
     ${arm('ArmL')}${arm('ArmR', itemSVG(o.item))}
-    <rect x="-6" y="-186" width="12" height="16" fill="${SKIN}"/>
-    <path d="M-26 -172 Q-29 -170 -27 -158 L-21 -112 L21 -112 L27 -158 Q29 -170 26 -172 Q13 -176 0 -170 Q-13 -176 -26 -172 Z" fill="${o.color}"/>
-    <path d="M-8 -172 L0 -164 L8 -172" stroke="rgba(255,255,255,.6)" stroke-width="2.5" fill="none"/>
-    ${o.face ? '' : `<text y="-128" text-anchor="middle" font-size="26" font-weight="900" fill="#fff" stroke="rgba(0,0,0,.35)" stroke-width="1.2">${o.num || 10}</text>`}
+    <path d="M-4.6 -193 L4.6 -193 L5.2 -181 Q9 -179.5 13 -180 L-13 -180 Q-9 -179.5 -5.2 -181 Z" fill="${SKIN}"/>
+    ${vol(torsoD, o.color)}
+    <path d="M-17 -115 H17" stroke="rgba(255,255,255,.6)" stroke-width="1.6"/>
+    ${o.face
+      ? `<path d="M-6.5 -180.4 L0 -171 L6.5 -180.4 Z" fill="${SKIN}"/><path d="M-7.5 -181 L0 -170 L7.5 -181" stroke="rgba(255,255,255,.85)" stroke-width="2" fill="none" stroke-linejoin="round"/>
+         <path d="M-12 -160 q6 3 11 0 M1 -160 q5 3 11 0" stroke="rgba(0,0,0,.14)" stroke-width="1.4" fill="none"/>`
+      : `<path d="M-8 -180.6 Q0 -175 8 -180.6" stroke="rgba(255,255,255,.85)" stroke-width="2" fill="none"/>
+         <path d="M0 -172 V-118" stroke="rgba(0,0,0,.1)" stroke-width="1.5"/>
+         <text y="-140" text-anchor="middle" font-size="21" font-weight="900" fill="#fff" stroke="rgba(0,0,0,.35)" stroke-width="1">${o.num || 10}</text>`}
     ${head}</g>`;
 }
 const ballSVG = {
   soccer: `<circle r="26" fill="#fff" stroke="#222" stroke-width="2.5"/>
     <polygon points="0,-9 8.6,-2.8 5.3,7.3 -5.3,7.3 -8.6,-2.8" fill="#222"/>
     <path d="M0 -9V-25M8.6 -2.8L23 -8M5.3 7.3L14 20M-5.3 7.3L-14 20M-8.6 -2.8L-23 -8" stroke="#222" stroke-width="2"/>
-    <path d="M-6 -26L0 -25L6 -26L4 -21H-4Z M22 -12L25 -4L20 -6Z M-22 -12L-25 -4L-20 -6Z M12 22L17 18L14 24Z M-12 22L-17 18L-14 24Z" fill="#222"/>`,
+    <path d="M-6 -26L0 -25L6 -26L4 -21H-4Z M22 -12L25 -4L20 -6Z M-22 -12L-25 -4L-20 -6Z M12 22L17 18L14 24Z M-12 22L-17 18L-14 24Z" fill="#222"/>
+    <circle r="26" fill="url(#gBall)"/>`,
   volley: `<circle r="24" fill="#fdd835" stroke="#333" stroke-width="2"/>
     <path d="M-24 0C-10 -6 10 -6 24 0" stroke="#1565c0" stroke-width="6" fill="none"/>
     <path d="M-10 -22C-2 -8 -2 10 -12 21" stroke="#1565c0" stroke-width="6" fill="none"/>
-    <path d="M12 -21C4 -6 6 12 16 18" stroke="#fff" stroke-width="5" fill="none"/>`,
+    <path d="M12 -21C4 -6 6 12 16 18" stroke="#fff" stroke-width="5" fill="none"/>
+    <circle r="24" fill="url(#gBall)"/>`,
   badminton: `<path d="M-15 -22L15 -22L7 4L-7 4Z" fill="#fff" stroke="#9e9e9e" stroke-width="1.5"/>
     <path d="M-9 -22L-4 4M0 -22V4M9 -22L4 4M-13 -13H13" stroke="#bdbdbd" stroke-width="1.3"/>
     <ellipse cy="9" rx="8" ry="7" fill="#fff" stroke="#795548" stroke-width="2"/><rect x="-8" y="3" width="16" height="4" fill="#d32f2f"/>`,
   tt: `<circle r="11" fill="#ff9800" stroke="#e65100" stroke-width="1.5"/><circle cx="-3.5" cy="-3.5" r="3.5" fill="rgba(255,255,255,.7)"/>`
 };
 
-function crowd() {
-  let s = ''; const cols = ['#ef5350','#42a5f5','#ffee58','#66bb6a','#ab47bc','#ffa726','#eceff1'];
-  for (let i = 0; i < 260; i++) {
-    const x = -500 + (i % 130) * 15.4 + (Math.floor(i / 130) ? 7 : 0), y = 30 + Math.floor(i / 130) * 26 + rand(-3, 3);
-    s += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="8" fill="${cols[i % 7]}"/><circle cx="${x.toFixed(1)}" cy="${(y - 11).toFixed(1)}" r="5" fill="#ffcc80"/>`;
+/* ---------- 자연스러운 바닥 질감 ----------
+   simplex-noise (https://github.com/jwagner/simplex-noise.js, MIT)로 잔디 얼룩·나무결·매트 질감을
+   원근에 맞춰 한 번만 그려 두고 배경 그림으로 씁니다. 라이브러리가 없으면 내장 노이즈로 대신합니다. */
+const TEX = {};
+let noiseFn = null;
+function getNoise() {
+  if (noiseFn) return noiseFn;
+  try { if (window.SimplexNoise) { const sn = new window.SimplexNoise('sportplay'); return noiseFn = (x, y) => sn.noise2D(x, y); } } catch (e) {}
+  const h = (x, y) => { const s = Math.sin(x * 127.1 + y * 311.7) * 43758.5453; return s - Math.floor(s); };
+  return (x, y) => {                                   // 대체용 값 노이즈 (저장해 두지 않음: 라이브러리가 늦게 오면 바꿔 씀)
+    const xi = Math.floor(x), yi = Math.floor(y), xf = x - xi, yf = y - yi, u = xf * xf * (3 - 2 * xf), v = yf * yf * (3 - 2 * yf);
+    return lerp(lerp(h(xi, yi), h(xi + 1, yi), u), lerp(h(xi, yi + 1), h(xi + 1, yi + 1), u), v) * 2 - 1;
+  };
+}
+addEventListener('noise-ready', () => {               // CDN에서 늦게 불러온 경우 질감을 다시 그림
+  noiseFn = null; Object.keys(TEX).forEach(k => delete TEX[k]);
+  if (state === 'title') buildScene(); else needBuild = true;
+});
+const SHADE = {
+  grass(u, v, n, o) {                                  // 깎은 줄무늬 + 큰 얼룩 + 잔디결
+    const band = Math.floor(v / 80) & 1, k = (band ? 1 : .87) * (1 + n(u / 220, v / 220) * .08 + n(u / 40, v / 30) * .04 + n(u / 7, v / 4) * .06);
+    o[0] = 44 * k; o[1] = 134 * k; o[2] = 54 * k;
+  },
+  wood(u, v, n, o) {                                   // 체육관 마루: 널빤지마다 색이 조금씩 다르고 결이 있음
+    const pu = u / 16, pi = Math.floor(pu), seg = Math.floor(v / 240 + pi * .37);
+    const k = (1 + n(pi * 3.1, seg * 5.7) * .1 + n(u / 2.2, v / 70 + pi) * .05) * (pu - pi < .08 ? .84 : 1);
+    o[0] = 208 * k; o[1] = 158 * k; o[2] = 100 * k;
+  },
+  mat(u, v, n, o) { const k = 1 + n(u / 90, v / 90) * .08 + n(u / 5, v / 5) * .05; o[0] = 22 * k; o[1] = 78 * k; o[2] = 70 * k; },
+  red(u, v, n, o) { const k = 1 + n(u / 110, v / 110) * .09 + n(u / 5, v / 5) * .05; o[0] = 132 * k; o[1] = 40 * k; o[2] = 44 * k; }
+};
+function groundTex(kind, yh) {
+  const key = kind + yh; if (TEX[key] != null) return TEX[key];
+  const X0 = -260, W = 1520, H = 830 - yh, cw = 1000, ch = Math.round(cw * H / W);
+  let url = '';
+  try {
+    const c = document.createElement('canvas'); c.width = cw; c.height = ch;
+    const ctx = c.getContext('2d'), img = ctx.createImageData(cw, ch), d = img.data, n = getNoise(), sh = SHADE[kind], o = [0, 0, 0];
+    for (let j = 0, k = 0; j < ch; j++) {
+      const y = yh + (j + .5) * H / ch, dz = 300 / (y - yh + 150), v = dz * 700;     // dz: 멀수록 큼 (원근)
+      for (let i = 0; i < cw; i++, k += 4) {
+        const x = X0 + (i + .5) * W / cw, light = 1.1 - .3 * ((x - 500) / 800) ** 2 - .07 * dz;   // 가운데가 밝은 조명
+        sh((x - 500) * dz, v, n, o);
+        d[k] = o[0] * light; d[k + 1] = o[1] * light; d[k + 2] = o[2] * light; d[k + 3] = 255;
+      }
+    }
+    ctx.putImageData(img, 0, 0); url = c.toDataURL('image/jpeg', .88);
+  } catch (e) {}
+  return TEX[key] = url ? `<image href="${url}" x="${X0}" y="${yh}" width="${W}" height="${H}" preserveAspectRatio="none"/>` : '';
+}
+
+function crowd() {            // 4줄 관중석: 뒷줄일수록 작고 어둡게
+  let s = ''; const cols = ['#ef5350','#42a5f5','#ffee58','#66bb6a','#ab47bc','#ffa726','#eceff1'], skins = ['#ffcc80','#f1c27d','#e0ac69','#c68642'];
+  for (let r = 0; r < 4; r++) {
+    const y0 = -2 + r * 24, sc = .76 + r * .08; let row = '';
+    for (let i = 0; i < 136; i++) {
+      const x = (-530 + i * 15.2 + (r % 2 ? 7.6 : 0) + rand(-2, 2)).toFixed(1), y = y0 + rand(-3, 3);
+      row += `<circle cx="${x}" cy="${y.toFixed(1)}" r="${(8 * sc).toFixed(1)}" fill="${cols[Math.floor(rand(0, 7))]}"/><circle cx="${x}" cy="${(y - 10.5 * sc).toFixed(1)}" r="${(4.8 * sc).toFixed(1)}" fill="${skins[Math.floor(rand(0, 4))]}"/>`;
+    }
+    s += `<g opacity="${(.5 + r * .16).toFixed(2)}">${row}</g>`;
   }
   return s;
 }
-function stripes(y0, h, c1, c2) {
-  let s = ''; for (let y = y0, i = 0; y < 2600; y += h, i++) s += `<rect x="-2000" y="${y}" width="5000" height="${h}" fill="${i % 2 ? c1 : c2}"/>`; return s;
-}
 function netGrid(x0, x1, y0, y1, step, col) {
-  let s = ''; for (let x = x0; x <= x1; x += step) s += `M${x} ${y0}V${y1}`;
-  for (let y = y0; y <= y1; y += step) s += `M${x0} ${y}H${x1}`;
+  let s = ''; for (let x = x0; x <= x1 + .01; x += step) s += `M${x} ${y0}V${y1}`;
+  for (let y = y0; y <= y1 + .01; y += step) s += `M${x0} ${y}H${x1}`;
   return `<path d="${s}" stroke="${col}" stroke-width="1.6" fill="none"/>`;
 }
+function goal3D() {           // 깊이가 있는 골대 그물: 뒤쪽 면 + 옆·위 그물
+  let s = '';
+  for (let y = 132; y <= 340; y += 26) { const yb = (146 + (y - 132) * 184 / 208).toFixed(1); s += `M256 ${y}L272 ${yb}M744 ${y}L728 ${yb}`; }
+  for (let x = 256; x <= 744; x += 30.5) s += `M${x} 132L${(272 + (x - 256) * 456 / 488).toFixed(1)} 146`;
+  return `<g id="goalNet"><rect x="256" y="132" width="488" height="208" fill="rgba(0,0,24,.25)"/>
+    ${netGrid(272, 728, 146, 330, 19, 'rgba(255,255,255,.5)')}<path d="M272 330H728" stroke="rgba(255,255,255,.5)" stroke-width="1.6"/>
+    <path d="${s}" stroke="rgba(255,255,255,.4)" stroke-width="1.4" fill="none"/></g>`;
+}
+const BG_DEFS = `<radialGradient id="bVig" gradientUnits="userSpaceOnUse" cx="500" cy="330" r="900"><stop offset=".5" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000014" stop-opacity=".5"/></radialGradient>
+  <radialGradient id="bGlow"><stop offset="0" stop-color="#fff" stop-opacity=".95"/><stop offset=".18" stop-color="#e3f2fd" stop-opacity=".5"/><stop offset="1" stop-color="#90caf9" stop-opacity="0"/></radialGradient>
+  <linearGradient id="bPost" x1="0" x2="1"><stop offset="0" stop-color="#fff"/><stop offset=".5" stop-color="#eceff1"/><stop offset="1" stop-color="#90a4ae"/></linearGradient>
+  <linearGradient id="bSteel" x1="0" x2="1"><stop offset="0" stop-color="#b0bec5"/><stop offset=".4" stop-color="#78909c"/><stop offset="1" stop-color="#37474f"/></linearGradient>`;
+const VIG = `<rect x="-2000" y="-2000" width="5000" height="5000" fill="url(#bVig)"/>`;
+const sheen = (y, h, a) => `<linearGradient id="bSheen" gradientUnits="userSpaceOnUse" x1="0" y1="${y}" x2="0" y2="${y + h}"><stop offset="0" stop-color="#fff" stop-opacity="${a}"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>`;
+const lamps = (xs, y, op) => xs.map(x => `<g transform="translate(${x},${y})"><rect x="-34" y="-12" width="68" height="24" rx="4" fill="#263238"/>${[-24, -8, 8, 24].map(d => `<circle cx="${d}" r="6" fill="#fff"/>`).join('')}<circle r="150" fill="url(#bGlow)" opacity="${op}"/></g>`).join('');
 
 function buildBG(id) {
-  if (id === 'soccer') return {
-    bg: `<rect x="-2000" y="-2000" width="5000" height="2085" fill="#1a237e"/>
-      <rect x="-2000" y="-2000" width="5000" height="2010" fill="#0d1440"/>
+  if (id === 'soccer') return {                       /* 밤 경기장: 조명탑 · 관중석 · 잔디 */
+    bg: `<defs>${BG_DEFS}
+      <linearGradient id="bSky" gradientUnits="userSpaceOnUse" x1="0" y1="-260" x2="0" y2="90"><stop offset="0" stop-color="#03061a"/><stop offset="1" stop-color="#1a2a6c"/></linearGradient>
+      <linearGradient id="bBoard" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#039be5"/><stop offset="1" stop-color="#01579b"/></linearGradient></defs>
+      <rect x="-2000" y="-2000" width="5000" height="2090" fill="#03061a"/>
+      <rect x="-2000" y="-260" width="5000" height="350" fill="url(#bSky)"/>
+      <rect x="-2000" y="-56" width="5000" height="142" fill="#0c1438"/>
       <g id="crowd">${crowd()}</g>
-      <rect x="-2000" y="82" width="5000" height="34" fill="#0277bd"/>
-      <text x="500" y="108" text-anchor="middle" font-size="22" font-weight="900" fill="#fff" letter-spacing="6">★ 모두 함께 스포츠 ★ 할 수 있어요 ★ 모두 함께 스포츠 ★</text>
-      ${stripes(116, 56, '#2e7d32', '#388e3c')}
-      <path d="M-2000 340H3000 M150 340L95 480H905L850 340 M330 340L315 392H685L670 340" stroke="#fff" stroke-width="5" fill="none" opacity=".9"/>
+      <rect x="-2000" y="-2000" width="5000" height="1944" fill="#060a1c"/>
+      <rect x="-2000" y="-60" width="5000" height="7" fill="#455a64"/>
+      ${lamps([-260, 120, 500, 880, 1260], -80, .55)}
+      <rect x="-2000" y="82" width="5000" height="34" fill="url(#bBoard)"/><rect x="-2000" y="82" width="5000" height="2" fill="rgba(255,255,255,.35)"/>
+      <text x="500" y="107" text-anchor="middle" font-size="21" font-weight="900" fill="#fff" letter-spacing="6">★ 모두 함께 스포츠 ★ 할 수 있어요 ★ 모두 함께 스포츠 ★</text>
+      <rect x="-2000" y="116" width="5000" height="2600" fill="#2e7d32"/>${groundTex('grass', 116)}
+      <rect x="-2000" y="116" width="5000" height="10" fill="rgba(0,0,0,.22)"/>
+      <path d="M-2000 340H3000 M150 340L95 480H905L850 340 M330 340L315 392H685L670 340" stroke="#fff" stroke-width="5" fill="none" opacity=".88"/>
       <ellipse cx="500" cy="545" rx="9" ry="4" fill="#fff"/>
-      <g id="goalNet"><rect x="256" y="132" width="488" height="208" fill="rgba(255,255,255,.08)"/>${netGrid(256, 744, 132, 340, 22, 'rgba(255,255,255,.55)')}</g>
-      <rect x="244" y="122" width="12" height="220" fill="#fff"/><rect x="744" y="122" width="12" height="220" fill="#fff"/>
-      <rect x="244" y="120" width="512" height="13" fill="#fff"/>`, front: '' };
-  if (id === 'volley') return {
-    bg: `<rect x="-2000" y="-2000" width="5000" height="2125" fill="#d7ccc8"/>
-      ${[0,1,2,3].map(i => `<rect x="-2000" y="${10 + i * 26}" width="5000" height="16" fill="#8d6e63" opacity=".55"/>`).join('')}
-      <rect x="-2000" y="125" width="5000" height="2600" fill="#a1522a"/>
-      <polygon points="250,125 750,125 850,300 150,300" fill="#f08a3c" stroke="#fff" stroke-width="5"/>
-      <polygon points="150,300 850,300 1010,640 -10,640" fill="#f08a3c" stroke="#fff" stroke-width="5"/>
-      <path d="M200 215H800 M118 370H882" stroke="#fff" stroke-width="4" opacity=".9"/>`,
-    front: `<rect x="128" y="180" width="10" height="125" fill="#607d8b"/><rect x="862" y="180" width="10" height="125" fill="#607d8b"/>
-      <rect x="138" y="202" width="724" height="58" fill="rgba(20,20,20,.55)"/>${netGrid(138, 862, 202, 260, 12, 'rgba(255,255,255,.35)')}
-      <rect x="136" y="196" width="728" height="9" fill="#fff"/><rect x="136" y="258" width="728" height="4" fill="#fff"/>` };
-  if (id === 'badminton') return {
-    bg: `<rect x="-2000" y="-2000" width="5000" height="2125" fill="#37474f"/>
-      <rect x="-2000" y="60" width="5000" height="40" fill="#263238"/>
+      <ellipse cx="500" cy="343" rx="262" ry="9" fill="rgba(0,0,0,.22)"/>
+      ${goal3D()}
+      <rect x="244" y="122" width="12" height="220" fill="url(#bPost)"/><rect x="744" y="122" width="12" height="220" fill="url(#bPost)"/>
+      <rect x="244" y="120" width="512" height="13" rx="2" fill="#fff"/><rect x="256" y="131" width="488" height="3" fill="rgba(0,0,0,.22)"/>
+      ${VIG}`, front: '' };
+  if (id === 'volley') return {                       /* 체육관: 밝은 벽 · 창 · 마루 */
+    bg: `<defs>${BG_DEFS}${sheen(125, 240, .2)}
+      <linearGradient id="bWall" gradientUnits="userSpaceOnUse" x1="0" y1="-220" x2="0" y2="125"><stop offset="0" stop-color="#f5efe6"/><stop offset="1" stop-color="#cdbba6"/></linearGradient>
+      <linearGradient id="bWin" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#e1f5fe"/><stop offset="1" stop-color="#90caf9"/></linearGradient></defs>
+      <rect x="-2000" y="-2000" width="5000" height="2125" fill="#f5efe6"/>
+      <rect x="-2000" y="-220" width="5000" height="345" fill="url(#bWall)"/>
+      ${[-300, -100, 100, 300, 500, 700, 900, 1100, 1300].map(x => `<rect x="${x - 70}" y="-190" width="140" height="130" rx="4" fill="url(#bWin)" stroke="#fff" stroke-width="6"/><path d="M${x} -190V-60M${x - 70} -125H${x + 70}" stroke="#fff" stroke-width="4"/>`).join('')}
+      ${[0, 1, 2, 3].map(i => `<rect x="-2000" y="${14 + i * 24}" width="5000" height="13" fill="#8d6e63" opacity=".4"/><rect x="-2000" y="${27 + i * 24}" width="5000" height="2" fill="rgba(0,0,0,.12)"/>`).join('')}
+      <rect x="-2000" y="111" width="5000" height="14" fill="#4e342e"/>
+      <rect x="-2000" y="125" width="5000" height="2600" fill="#b9854f"/>${groundTex('wood', 125)}
+      <polygon points="250,125 750,125 850,300 150,300" fill="#f08a3c" fill-opacity=".86" stroke="#fff" stroke-width="5"/>
+      <polygon points="150,300 850,300 1010,640 -10,640" fill="#f08a3c" fill-opacity=".86" stroke="#fff" stroke-width="5"/>
+      <path d="M200 215H800 M118 370H882" stroke="#fff" stroke-width="4" opacity=".9"/>
+      <rect x="-2000" y="125" width="5000" height="240" fill="url(#bSheen)"/>
+      ${VIG}`,
+    front: `<rect x="126" y="176" width="13" height="130" rx="3" fill="url(#bSteel)"/><rect x="861" y="176" width="13" height="130" rx="3" fill="url(#bSteel)"/>
+      <ellipse cx="132" cy="306" rx="16" ry="4" fill="rgba(0,0,0,.3)"/><ellipse cx="868" cy="306" rx="16" ry="4" fill="rgba(0,0,0,.3)"/>
+      <rect x="138" y="202" width="724" height="58" fill="rgba(20,20,20,.5)"/>${netGrid(138, 862, 202, 260, 12, 'rgba(255,255,255,.35)')}
+      <rect x="136" y="196" width="728" height="9" fill="#fff"/><rect x="136" y="258" width="728" height="4" fill="#fff"/>
+      <path d="M212 150V262M788 150V262" stroke="#e53935" stroke-width="4" stroke-dasharray="10 10"/><path d="M212 160V262M788 160V262" stroke="#fff" stroke-width="4" stroke-dasharray="10 10"/>` };
+  if (id === 'badminton') return {                    /* 어두운 경기장 + 초록 매트 */
+    bg: `<defs>${BG_DEFS}${sheen(125, 220, .16)}
+      <linearGradient id="bWall" gradientUnits="userSpaceOnUse" x1="0" y1="-220" x2="0" y2="125"><stop offset="0" stop-color="#10181c"/><stop offset="1" stop-color="#37474f"/></linearGradient></defs>
+      <rect x="-2000" y="-2000" width="5000" height="2125" fill="#10181c"/>
+      <rect x="-2000" y="-220" width="5000" height="345" fill="url(#bWall)"/>
+      ${lamps([-100, 200, 500, 800, 1100], -70, .4)}
+      <rect x="-2000" y="60" width="5000" height="40" fill="#162027"/><rect x="-2000" y="60" width="5000" height="2" fill="#4db6ac"/><rect x="-2000" y="98" width="5000" height="2" fill="#4db6ac"/>
       <text x="500" y="87" text-anchor="middle" font-size="20" font-weight="900" fill="#80cbc4" letter-spacing="8">BADMINTON · 배드민턴</text>
-      <rect x="-2000" y="125" width="5000" height="2600" fill="#1b5e20"/>
-      <polygon points="250,125 750,125 850,300 150,300" fill="#2e7d32" stroke="#fff" stroke-width="4"/>
-      <polygon points="150,300 850,300 1010,640 -10,640" fill="#2e7d32" stroke="#fff" stroke-width="4"/>
-      <path d="M500 125V300 M500 300V640 M213 235H787 M130 345H870 M262 145H738" stroke="#fff" stroke-width="3" opacity=".9"/>`,
-    front: `<rect x="128" y="190" width="8" height="115" fill="#b0bec5"/><rect x="864" y="190" width="8" height="115" fill="#b0bec5"/>
+      <rect x="-2000" y="125" width="5000" height="2600" fill="#164e46"/>${groundTex('mat', 125)}
+      <rect x="-2000" y="125" width="5000" height="9" fill="rgba(0,0,0,.3)"/>
+      <polygon points="250,125 750,125 850,300 150,300" fill="#2e8b3a" fill-opacity=".9" stroke="#fff" stroke-width="4"/>
+      <polygon points="150,300 850,300 1010,640 -10,640" fill="#2e8b3a" fill-opacity=".9" stroke="#fff" stroke-width="4"/>
+      <path d="M500 125V300 M500 300V640 M213 235H787 M130 345H870 M262 145H738" stroke="#fff" stroke-width="3" opacity=".9"/>
+      <rect x="-2000" y="125" width="5000" height="220" fill="url(#bSheen)"/>
+      ${VIG}`,
+    front: `<rect x="127" y="188" width="9" height="118" rx="2" fill="url(#bSteel)"/><rect x="864" y="188" width="9" height="118" rx="2" fill="url(#bSteel)"/>
+      <ellipse cx="131" cy="306" rx="14" ry="3.5" fill="rgba(0,0,0,.35)"/><ellipse cx="869" cy="306" rx="14" ry="3.5" fill="rgba(0,0,0,.35)"/>
       <rect x="136" y="200" width="728" height="44" fill="rgba(255,255,255,.08)"/>${netGrid(136, 864, 200, 244, 9, 'rgba(255,255,255,.35)')}
       <rect x="134" y="195" width="732" height="7" fill="#fff"/>` };
-  return { /* 탁구 */
-    bg: `<rect x="-2000" y="-2000" width="5000" height="2160" fill="#455a64"/>
-      <rect x="-2000" y="120" width="5000" height="42" fill="#c62828"/>
-      <text x="500" y="149" text-anchor="middle" font-size="20" font-weight="900" fill="#fff" letter-spacing="8">TABLE TENNIS · 탁구</text>
-      <rect x="-2000" y="162" width="5000" height="2600" fill="#263238"/>
-      ${[0,1,2,3,4,5,6].map(i => `<rect x="-2000" y="${200 + i * 70}" width="5000" height="3" fill="rgba(255,255,255,.04)"/>`).join('')}`,
-    front: `<rect x="236" y="440" width="12" height="150" fill="#212121"/><rect x="752" y="440" width="12" height="150" fill="#212121"/>
-      <polygon points="300,210 700,210 800,440 200,440" fill="#1565c0" stroke="#fff" stroke-width="5"/>
+  return { /* 탁구: 어두운 경기장 · 붉은 바닥 · 윤이 나는 탁구대 */
+    bg: `<defs>${BG_DEFS}${sheen(162, 200, .12)}
+      <linearGradient id="bWall" gradientUnits="userSpaceOnUse" x1="0" y1="-220" x2="0" y2="162"><stop offset="0" stop-color="#12181c"/><stop offset="1" stop-color="#455a64"/></linearGradient>
+      <linearGradient id="bFence" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#1e88e5"/><stop offset="1" stop-color="#0d47a1"/></linearGradient>
+      <linearGradient id="bTable" gradientUnits="userSpaceOnUse" x1="0" y1="210" x2="0" y2="440"><stop offset="0" stop-color="#0d47a1"/><stop offset=".55" stop-color="#1565c0"/><stop offset="1" stop-color="#1e88e5"/></linearGradient>
+      <linearGradient id="bGloss" gradientUnits="userSpaceOnUse" x1="300" y1="210" x2="700" y2="440"><stop offset=".3" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".16"/><stop offset=".7" stop-color="#fff" stop-opacity="0"/></linearGradient></defs>
+      <rect x="-2000" y="-2000" width="5000" height="2162" fill="#12181c"/>
+      <rect x="-2000" y="-220" width="5000" height="382" fill="url(#bWall)"/>
+      ${lamps([-100, 200, 500, 800, 1100], -70, .4)}
+      <rect x="-2000" y="162" width="5000" height="2600" fill="#7a2428"/>${groundTex('red', 162)}
+      ${[-340, -100, 140, 380, 620, 860, 1100].map(x => `<rect x="${x}" y="126" width="236" height="48" rx="3" fill="url(#bFence)" stroke="#0a2f6b" stroke-width="2"/><text x="${x + 118}" y="158" text-anchor="middle" font-size="15" font-weight="900" fill="#fff" letter-spacing="2">탁구 · TABLE TENNIS</text>`).join('')}
+      <rect x="-2000" y="172" width="5000" height="8" fill="rgba(0,0,0,.3)"/>
+      <rect x="-2000" y="162" width="5000" height="200" fill="url(#bSheen)"/>
+      ${VIG}`,
+    front: `<ellipse cx="500" cy="594" rx="330" ry="24" fill="rgba(0,0,0,.35)"/>
+      <rect x="236" y="440" width="12" height="150" fill="url(#bSteel)"/><rect x="752" y="440" width="12" height="150" fill="url(#bSteel)"/>
+      <polygon points="300,210 700,210 800,440 200,440" fill="url(#bTable)" stroke="#fff" stroke-width="5"/>
+      <polygon points="300,210 700,210 800,440 200,440" fill="url(#bGloss)"/>
       <path d="M500 210V440" stroke="#fff" stroke-width="3"/>
-      <polygon points="200,440 800,440 800,456 200,456" fill="#0d47a1"/>
+      <polygon points="200,440 800,440 800,456 200,456" fill="#0a3478"/><rect x="200" y="454" width="600" height="3" fill="rgba(0,0,0,.35)"/>
       <rect x="240" y="292" width="520" height="22" fill="rgba(255,255,255,.18)"/>${netGrid(240, 760, 292, 314, 7, 'rgba(255,255,255,.45)')}
       <rect x="238" y="289" width="524" height="5" fill="#fff"/><rect x="232" y="284" width="8" height="32" fill="#9e9e9e"/><rect x="760" y="284" width="8" height="32" fill="#9e9e9e"/>` };
 }
@@ -395,7 +569,7 @@ function buildBG(id) {
 const P = { pl:{x:0,y:0,s:1,r:0}, op:{x:0,y:0,s:1,r:0} };
 let rest = { plArmL:15, plArmR:-15, opArmL:0, opArmR:0 };
 function setPerson(id, o) { const g = $(id); if (g) g.setAttribute('transform', `translate(${o.x.toFixed(1)},${o.y.toFixed(1)}) scale(${o.s}) rotate(${o.r.toFixed(1)},0,-95)`); }
-function setArm(id, a) { const g = $(id); if (!g) return; const left = id.endsWith('L'); g.setAttribute('transform', `translate(${left ? -23 : 23},-166) rotate(${a.toFixed(1)})`); }
+function setArm(id, a) { const g = $(id); if (!g) return; const left = id.endsWith('L'); g.setAttribute('transform', `translate(${left ? -23.5 : 23.5},-171) rotate(${a.toFixed(1)})`); }
 function setLeg(id, a) { const g = $(id); if (g) g.setAttribute('transform', `rotate(${a.toFixed(1)},${id.endsWith('L') ? -10 : 10},-104)`); }
 let ballState = { x:0, y:0, s:1, rot:0 };
 function setBall(x, y, s, floorY) {
@@ -426,13 +600,19 @@ function buildScene() {
     zs.map((z, i) => `<ellipse class="zone" id="zone${i}" cx="${z[0]}" cy="${z[1]}" rx="${sp.zr[0]}" ry="${sp.zr[1]}"/>`).join('') +
     `<ellipse id="ring" rx="${sp.zr[0] + 14}" ry="${sp.zr[1] + 14}" opacity="0"/>
      <g id="pointer" opacity="0"><polygon points="-30,-40 30,-40 0,0" fill="#ffd600" stroke="#222" stroke-width="4" stroke-linejoin="round"/></g>`;
+  if (isLR()) {            // 왼쪽·오른쪽 익히기: 바닥에 칸 표시
+    const gap = lrGap(), y = startFloor(), M = S.lrMax, x0 = sp.start[0]; let c = '';
+    for (let i = -M; i <= M; i++) c += `<ellipse class="cell${i ? '' : ' mid'}" cx="${(x0 + i * gap).toFixed(1)}" cy="${y}" rx="${i ? 13 : 19}" ry="${i ? 5 : 7}"/>`;
+    if (S.lrHint) c += `<text class="cellLbl" x="${(x0 - M * gap - 26).toFixed(1)}" y="${y + 9}" text-anchor="end">◀ 왼쪽</text><text class="cellLbl" x="${(x0 + M * gap + 26).toFixed(1)}" y="${y + 9}">오른쪽 ▶</text>`;
+    $('zonesLayer').insertAdjacentHTML('beforeend', `<g id="cells">${c}</g>`);
+  }
   // 자세
   rest = S.sport === 'soccer' ? { plArmL:18, plArmR:-18, opArmL:125, opArmR:-125 }
        : S.sport === 'volley' ? { plArmL:20, plArmR:-20, opArmL:35, opArmR:-35 }
        : S.sport === 'badminton' ? { plArmL:25, plArmR:-60, opArmL:25, opArmR:-70 }
        : { plArmL:25, plArmR:-55, opArmL:25, opArmR:-55 };
   resetPoses();
-  $('icoScore').textContent = sp.icon; $('lblScore').textContent = S.mode === 'receive' ? '받기' : sp.score; $('lblShots').textContent = isRecv() ? '받을 공' : sp.verb;
+  $('icoScore').textContent = sp.icon; $('lblScore').textContent = S.mode === 'receive' ? '받기' : isLR() ? '성공' : sp.score; $('lblShots').textContent = isRecv() ? '받을 공' : isLR() ? '문제' : sp.verb;
   lastHL = ''; updateZonesVisibility(); highlight(-1);
   document.documentElement.classList.toggle('reduce', !!S.reduce);
   layout();
@@ -460,6 +640,86 @@ function stepPlayer(dt) {            // 목표 위치까지 부드럽게 걸어�
   plOff += step; walkPhase += Math.abs(step) * .09;
   ballState.rot += step * 2; placePlayer(true);
 }
+/* ---------- 한 칸씩 이동 · 왼쪽/오른쪽 익히기 ---------- */
+const clampN = (v, a, b) => Math.max(a, Math.min(b, v));
+const NUM = ['', '한', '두', '세', '네', '다섯'], CNT = ['', '하나', '둘', '셋', '넷', '다섯'];
+const KNAME = { L:'왼쪽', R:'오른쪽', C:'가운데' };
+let lrM = null, lrCell = 0, lrStay = 0, lrFlashT = 0, lrWrongT = 0, lrLastKind = '', lastStepT = 0, ptrX = null;
+const lrGap = () => rng() * 1.15 / S.lrMax;                           // 한 칸 너비
+const stepStyle = () => isLR() || S.moveStyle === 'step';
+function flashPad(dir) { const el = $(dir < 0 ? 'mvL' : dir > 0 ? 'mvR' : 'mvC'); el.classList.add('act'); setTimeout(() => el.classList.remove('act'), 230); }
+function stepMove(dir) {             // dir: -1 왼쪽 · 1 오른쪽 · 0 가운데
+  if (!canMove() || settingsOpen) return;
+  const now = performance.now();
+  if (Math.abs(plTarget - plOff) > 1 || now - lastStepT < 150) return;   // 걷는 중에는 무시 (떨림으로 여러 번 눌리는 것 방지)
+  if (isLR()) { lrStep(dir, now); return; }
+  if (!dir) return;
+  const z0 = offZone(plOff), z = clampN(z0 + dir, 0, 2); if (z === z0) return;
+  plTarget = zoneOff(z); lastStepT = now; flashPad(dir);
+}
+function lrLabel(m, spoken) { return m.kind === 'C' ? '가운데로 이동' : `${KNAME[m.kind]}으로 ${spoken ? NUM[m.n] + ' ' : m.n}번`; }
+function lrBanner() {
+  const m = lrM; if (m.kind === 'C') return `<span class="big">⏺ <span class="now">가운데</span>로 이동!</span>`;
+  const left = Math.abs(m.target - lrCell), done = Math.max(0, m.n - left);
+  return `<span class="big">${m.kind === 'L' ? '⬅ ' : ''}<span class="now">${KNAME[m.kind]}</span>으로 <b>${m.n}</b>번${m.kind === 'R' ? ' ➡' : ''}</span><span class="dots">${'●'.repeat(done)}${'○'.repeat(Math.min(left, 10))}</span>`;
+}
+function lrPads() {
+  const on = isLR() && state === 'ready' && lrM && !lrM.done, d = on ? Math.sign(lrM.target - lrCell) : 0;
+  const show = on && (S.lrHint || performance.now() < lrFlashT), c = on && lrM.kind === 'C';
+  $('mvL').classList.toggle('hint', !!show && d < 0); $('mvR').classList.toggle('hint', !!show && d > 0);
+  $('mvC').classList.toggle('hint', !!show && c); $('movePad').classList.toggle('center', !!c);
+}
+function lrMark() {
+  const on = isLR() && state === 'ready' && lrM && !lrM.done && S.lrHint;
+  if (!on) { showRecvMark(0, 0, false); return; }
+  showRecvMark(sp.start[0] + lrM.target * lrGap(), startFloor(), true, lrCell === lrM.target, clampN(lrGap() * .45, 26, 60));
+}
+function lrWrong() {
+  const now = performance.now(); lrFlashT = now + 1500; lrPads(); setTimeout(lrPads, 1600);
+  tone(300, 0, .12, 'sine', .15);
+  if (now - lrWrongT > 2500) { lrWrongT = now; speak(`${KNAME[lrM.kind]}${lrM.kind === 'L' ? '은' : lrM.kind === 'R' ? '은' : '는'} 이쪽이에요`); }
+}
+function lrStep(dir, now) {
+  const m = lrM; if (state !== 'ready' || !m || m.done) return;
+  const M = S.lrMax, want = Math.sign(m.target - lrCell); if (!want) return;
+  let next;
+  if (dir === 0) { if (m.kind !== 'C') { lrWrong(); return; } next = 0; }        // 가운데 버튼: 가운데로 바로 이동
+  else { if (dir !== want && S.lrBlock) { lrWrong(); return; } next = clampN(lrCell + dir, -M, M); if (next === lrCell) return; }
+  lrCell = next; plTarget = next * lrGap(); lastStepT = now; flashPad(dir); sfx.tick();
+  const left = Math.abs(m.target - lrCell);
+  if (m.kind !== 'C' && dir === want && CNT[m.n - left]) speak(CNT[m.n - left]);   // 하나, 둘, 셋 … 세어 주기
+  if (left === 0) m.done = true;
+  setBanner();
+}
+function lrTick(dt) {
+  const m = lrM; if (!m) return;
+  if (S.mouseMove && !m.done && ptrX != null) {       // 마우스를 따라 칸 이동, 목표 칸에 잠깐 머무르면 도착
+    const c = clampN(Math.round((ptrX - sp.start[0]) / lrGap()), -S.lrMax, S.lrMax);
+    if (c !== lrCell) { lrCell = c; plTarget = c * lrGap(); lrStay = 0; sfx.tick(); setBanner(); }
+    if (lrCell === m.target && Math.abs(plTarget - plOff) < 1) { lrStay += dt; if (lrStay >= 700) m.done = true; }
+  }
+  if (m.done && !m.fired && Math.abs(plTarget - plOff) < 1) { m.fired = true; shoot(offZone(plOff)); }   // 도착하면 상으로 슛!
+}
+async function newMission() {
+  const g = gen, M = S.lrMax, redo = lrM && !lrM.done;
+  lrM = null; state = 'busy'; setBanner();
+  lrCell = clampN(Math.round(plOff / lrGap()), -M, M);
+  if (S.lrKinds === 'left' || S.lrKinds === 'right') lrCell = 0;
+  await walkTo(lrCell * lrGap());                    // 칸에 맞춰 서기
+  if (g !== gen || !isLR()) return;
+  const opts = [];
+  if (S.lrKinds !== 'right' && lrCell > -M) opts.push('L');
+  if (S.lrKinds !== 'left' && lrCell < M) opts.push('R');
+  if (S.lrKinds === 'all' && lrCell !== 0 && lrLastKind !== 'C') opts.push('C');
+  const kind = pick(opts), room = kind === 'L' ? lrCell + M : M - lrCell;
+  const n = kind === 'C' ? Math.abs(lrCell) : 1 + Math.floor(Math.random() * room);
+  lrM = { kind, n, target: kind === 'C' ? 0 : lrCell + (kind === 'L' ? -n : n), done:false, fired:false };
+  lrLastKind = kind; lrStay = 0; state = 'ready';
+  if (!redo) { shots++; updateHUD(); }
+  setBanner();
+  speak(`${who()}${lrLabel(lrM, true)}${kind === 'C' ? '!' : ' 이동!'}`);
+}
+
 async function walkTo(off) {
   const from = plOff, dist = Math.abs(off - from);
   if (dist >= 1) await tween(dist / walkSpeed(), k => { const prev = plOff; plOff = lerp(from, off, k); walkPhase += Math.abs(plOff - prev) * .09; ballState.rot += (plOff - prev) * 2; placePlayer(true); });
@@ -586,7 +846,8 @@ let score = 0, shots = 0;
 const SCAN_SEQ = [0, 1, 2, 1];
 let scanPos = 0, scanT = 0, hoverZone = -1, dwellT = 0;
 // 단계: simple(1) → move(2) → receive(3) → rally(4)
-const isMove = () => S.mode === 'move' || S.mode === 'receive' || S.mode === 'rally';
+const isLR = () => S.mode === 'lr';
+const isMove = () => S.mode === 'move' || S.mode === 'receive' || S.mode === 'rally' || S.mode === 'lr';
 const isRecv = () => S.mode === 'receive' || S.mode === 'rally';
 const canMove = () => isMove() && (state === 'ready' || state === 'serveWait' || state === 'incoming');
 const ZTO = ['왼쪽으로', '가운데로', '오른쪽으로'];
@@ -600,13 +861,15 @@ function highlight(z, cls = 'on') {
   if (p) { if (z >= 0) { const [x, y] = sp.zones[z]; p.setAttribute('transform', `translate(${x},${y - sp.zr[1] - 14})`); p.setAttribute('opacity', 1); } else p.setAttribute('opacity', 0); }
 }
 function cols(z) { for (let i = 0; i < 3; i++) { const c = $('col' + i); if (c) c.classList.toggle('hover', i === z && S.mode === 'direct' && state === 'ready'); } }
-function updateZonesVisibility() { $('zonesLayer').classList.toggle('hidden', S.mode === 'simple'); }
+function updateZonesVisibility() { $('zonesLayer').classList.toggle('hidden', S.mode === 'simple' || isLR()); }
 
 function setBanner() {
   const b = $('banner'), t = $('bannerText');
   $('movePad').classList.toggle('on', canMove());
+  lrPads(); if (isLR()) lrMark();
   if (!['ready', 'serveWait', 'incoming'].includes(state)) { b.classList.add('off'); return; }
   b.classList.remove('off');
+  if (isLR()) { t.innerHTML = lrM ? lrBanner() : '준비!'; return; }
   const holdTip = S.hold > 0 ? ` <small>(꾹 ${(S.hold / 1000).toFixed(1)}초)</small>` : '';
   const nowZ = `<span class="now">${ZNAME[offZone(plOff)]}</span>`;
   if (isRecv() && state === 'serveWait') t.innerHTML = `공이 와요, 준비! · 지금: ${nowZ}`;
@@ -623,7 +886,8 @@ let needBuild = false;
 function startReady() {
   if (needBuild) { needBuild = false; buildScene(); }
   lastMoveZone = -1;
-  if (isRecv()) {                                  // 3·4단계: 상대가 먼저 공을 보냄
+  if (isLR()) { highlight(-1); newMission(); return; }   // 왼쪽·오른쪽 익히기: 문제 내기
+  if (isRecv()) {                                // 3·4단계: 상대가 먼저 공을 보냄
     state = 'serveWait'; rallyOpp = -1; oppBaseX = null; highlight(-1); ballToOpp(); setBanner();
     const g = gen; setTimeout(() => { if (g === gen) serve(); }, D(1000));
     return;
@@ -641,7 +905,7 @@ function startGame() {
   setTimeout(startReady, 600);
 }
 function goTitle() {
-  gen++; state = 'title'; press = null; holdBar(0); plOff = plTarget = 0; moveDir = 0; levelWins = 0; showRecvMark(0, 0, false);
+  gen++; state = 'title'; press = null; holdBar(0); plOff = plTarget = 0; moveDir = 0; levelWins = 0; lrM = null; showRecvMark(0, 0, false); setBanner();
   try { speechSynthesis.cancel(); } catch (e) {}
   score = 0; shots = 0; updateHUD();
   buildScene(); renderCards();
@@ -691,12 +955,13 @@ async function shoot(z) {
   state = 'busy'; dwellT = 0; setRing(0); cols(-1);
   if (S.mode !== 'simple') highlight(z, 'chosen');
   setBanner(); hideMsg();
-  if (S.mode !== 'rally') shots++;
+  if (S.mode !== 'rally' && !isLR()) shots++;
   updateHUD();
+  const lrOk = isLR() && lrM ? [`${lrLabel(lrM)} 성공! `, `${lrLabel(lrM, true)} 성공! `] : ['', ''];
 
   const oppOn = S.opp !== 'none' || isRecv();
-  // 4단계: 상대가 서 있는 곳으로 치면 막히고, 빈 곳으로 치면 득점
-  const blocked = S.mode === 'rally' && rallyOpp >= 0 ? z === rallyOpp : oppOn && Math.random() < BLOCK_P[S.opp];
+  // 4단계: 상대가 서 있는 곳으로 치면 막히고, 빈 곳으로 치면 득점 (왼쪽·오른쪽 익히기는 항상 성공)
+  const blocked = isLR() ? false : S.mode === 'rally' && rallyOpp >= 0 ? z === rallyOpp : oppOn && Math.random() < BLOCK_P[S.opp];
   const kz = S.mode === 'rally' && rallyOpp >= 0 ? rallyOpp : blocked ? z : [0, 1, 2].filter(i => i !== z)[Math.floor(Math.random() * 2)];
   const target = blocked ? sp.block(z) : sp.zones[z];
   const dur = D(sp.fly);
@@ -751,8 +1016,8 @@ async function shoot(z) {
       showMsg(`🏆 ${score}${sp.score === '골' ? '골' : '점'}!<small>${who()}정말 최고예요!</small>`, '', 'animate__tada');
       sfx.big(); speak(`${who()}${score}${sp.score === '골' ? '골' : '점'}! 정말 최고예요!`);
     } else {
-      showMsg(`${sp.win}<small>${who()}${pick(PRAISE)}</small>`, '', 'animate__bounceIn');
-      sfx.win(); speak(`${sp.say} ${who()}${pick(PRAISE)}`);
+      showMsg(`${sp.win}<small>${lrOk[0]}${who()}${pick(PRAISE)}</small>`, '', 'animate__bounceIn');
+      sfx.win(); speak(`${lrOk[1]}${sp.say} ${who()}${pick(PRAISE)}`);
     }
   }
   updateHUD();
@@ -775,12 +1040,12 @@ async function shoot(z) {
 }
 
 /* ---------- 3·4단계: 상대가 보내는 공 받기 ---------- */
-function showRecvMark(x, y, on, good) {
+function showRecvMark(x, y, on, good, rx = 72) {
   let m = $('recvMark');
   if (!m) { m = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse'); m.id = 'recvMark'; $('fxLayer').appendChild(m); }
   m.style.display = on ? '' : 'none';
   if (!on) return;
-  if (x != null) { m.setAttribute('cx', x); m.setAttribute('cy', y); m.setAttribute('rx', 72); m.setAttribute('ry', 24); }
+  if (x != null) { m.setAttribute('cx', x); m.setAttribute('cy', y); m.setAttribute('rx', rx); m.setAttribute('ry', rx / 3); }
   m.setAttribute('class', `zone ${good ? 'good' : 'on'} pulse`);
 }
 const handPt = () => [P.op.x + 24 * sp.opp.s, P.op.y - 200 * sp.opp.s];
@@ -845,7 +1110,7 @@ async function serve() {
 
 /* ---------- 자동 단계 올리기 ---------- */
 const LV = ['simple', 'move', 'receive', 'rally'];
-const LV_NAME = { simple:'누르기', move:'움직이며 누르기', receive:'상대 공 받기', rally:'받고 빈 곳으로 공격하기', scan:'스캔', direct:'직접 고르기' };
+const LV_NAME = { lr:'왼쪽 오른쪽 익히기', simple:'누르기', move:'움직이며 누르기', receive:'상대 공 받기', rally:'받고 빈 곳으로 공격하기', scan:'스캔', direct:'직접 고르기' };
 async function maybeLevelUp() {
   const i = LV.indexOf(S.mode);
   if (!S.autoLevel || i < 0 || i >= LV.length - 1) return;
@@ -863,6 +1128,7 @@ function zoneFromClientX(cx, cy) {
   try {
     const svg = $('scene'), pt = svg.createSVGPoint(); pt.x = cx; pt.y = cy;
     const p = pt.matrixTransform(svg.getScreenCTM().inverse()), zs = sp.zones;
+    ptrX = p.x;
     return p.x < (zs[0][0] + zs[1][0]) / 2 ? 0 : p.x < (zs[1][0] + zs[2][0]) / 2 ? 1 : 2;
   } catch (e) { return 1; }
 }
@@ -882,7 +1148,7 @@ function fire() {
   const now = performance.now();
   if (now - lastFire < S.debounce) return;
   if (state === 'title') { lastFire = now; startGame(); return; }
-  if (state !== 'ready') return;
+  if (state !== 'ready' || isLR()) return;       // 왼쪽·오른쪽 익히기는 도착하면 저절로 슛
   lastFire = now;
   let z;
   if (S.mode === 'simple') z = Math.floor(Math.random() * 3);
@@ -898,13 +1164,20 @@ function holdBar(p) {
 }
 const MOVE_KEYS = { ArrowLeft:-1, ArrowRight:1, a:-1, A:-1, d:1, D:1, 'ㅁ':-1, 'ㅇ':1 };
 let lastMoveZone = -1;
+const CENTER_KEYS = new Set(['ArrowUp', 'ArrowDown', ' ', 'Enter', 's', 'S', 'ㄴ']);
 const SKIP_KEYS = new Set(['Tab', 'Shift', 'Control', 'Alt', 'Meta', 'ContextMenu', 'CapsLock', 'NumLock', 'Escape']);
 function keyZone(k) { return k === 'ArrowLeft' || k === '1' ? 0 : k === 'ArrowRight' || k === '3' ? 2 : (S.mode === 'direct' && k !== '2' && k !== 'ArrowUp' && k !== 'ArrowDown' && hoverZone >= 0 ? hoverZone : 1); }
 addEventListener('keydown', e => {
   if (settingsOpen) { if (e.key === 'Escape' || e.key === 'F2') { e.preventDefault(); closeSettings(); } return; }
   if (e.key === 'F2') { e.preventDefault(); openSettings(); return; }
   if (e.key === 'Home') { e.preventDefault(); if (state !== 'title') goTitle(); return; }
-  if (isMove() && MOVE_KEYS[e.key]) { e.preventDefault(); if (canMove()) moveDir = MOVE_KEYS[e.key]; return; }
+  if (isMove() && MOVE_KEYS[e.key]) {
+    e.preventDefault();
+    if (stepStyle()) { if (!e.repeat) stepMove(MOVE_KEYS[e.key]); }      // 한 번 누르면 한 칸
+    else if (canMove()) moveDir = MOVE_KEYS[e.key];
+    return;
+  }
+  if (isLR() && canMove() && CENTER_KEYS.has(e.key)) { e.preventDefault(); if (!e.repeat) stepMove(0); return; }
   if (SKIP_KEYS.has(e.key) || /^F\d+$/.test(e.key) || e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
   e.preventDefault(); inputDown('key', keyZone(e.key));
 });
@@ -915,9 +1188,14 @@ addEventListener('keyup', e => {
 addEventListener('pointerdown', e => {
   if (settingsOpen || e.target.closest('.holdBtn') || e.target.closest('.card') || e.target.closest('.lvl')) return;
   e.preventDefault();
-  if (canMove()) {       // 화면 왼쪽/오른쪽 = 이동, 가운데 = 슛
+  if (canMove() && !S.mouseMove) {       // 화면 왼쪽/오른쪽 = 이동, 가운데 = 슛 (익히기에서는 가운데로 이동)
     const r = $('stage').getBoundingClientRect(), rx = (e.clientX - r.left) / r.width;
-    if (rx < .3 || rx > .7) { moveDir = rx < .3 ? -1 : 1; movePtr = true; return; }
+    if (isLR()) { stepMove(rx < .4 ? -1 : rx > .6 ? 1 : 0); return; }
+    if (rx < .3 || rx > .7) {
+      const d = rx < .3 ? -1 : 1;
+      if (stepStyle()) stepMove(d); else { moveDir = d; movePtr = true; }
+      return;
+    }
   }
   hoverZone = zoneFromClientX(e.clientX, e.clientY);
   inputDown('ptr', hoverZone);
@@ -928,9 +1206,9 @@ addEventListener('pointermove', e => {
   if (z !== hoverZone) { hoverZone = z; dwellT = 0; }
   if (press && press.src === 'ptr') press.zone = z;       // '뗄 때' 모드에서 누른 채 위치 고르기
 });
-addEventListener('pointerup', e => { if (movePtr) { movePtr = false; moveDir = 0; return; } inputUp('ptr'); if (e.pointerType === 'touch') { hoverZone = -1; dwellT = 0; } });
+addEventListener('pointerup', e => { if (movePtr) { movePtr = false; moveDir = 0; return; } inputUp('ptr'); if (e.pointerType === 'touch') { hoverZone = -1; dwellT = 0; ptrX = null; } });
 addEventListener('pointercancel', () => { press = null; holdBar(0); movePtr = false; moveDir = 0; });
-document.documentElement.addEventListener('pointerleave', () => { hoverZone = -1; dwellT = 0; });
+document.documentElement.addEventListener('pointerleave', () => { hoverZone = -1; dwellT = 0; ptrX = null; });
 addEventListener('contextmenu', e => e.preventDefault());
 addEventListener('blur', () => { press = null; holdBar(0); moveDir = 0; movePtr = false; });
 
@@ -943,7 +1221,7 @@ function pollPads() {
     const bt = i => gp.buttons[i] && gp.buttons[i].pressed;
     if (isMove()) {
       const dir = bt(14) ? -1 : bt(15) ? 1 : (gp.axes[0] < -.5 ? -1 : gp.axes[0] > .5 ? 1 : 0);
-      if (dir !== (padDir[gp.index] || 0)) { padDir[gp.index] = dir; moveDir = canMove() ? dir : 0; }
+      if (dir !== (padDir[gp.index] || 0)) { padDir[gp.index] = dir; if (stepStyle()) { if (dir) stepMove(dir); } else moveDir = canMove() ? dir : 0; }
     }
     const down = gp.buttons.some((b, i) => b.pressed && !(isMove() && i >= 12 && i <= 15)), was = padPrev[gp.index];
     if (down && !was) inputDown('pad', gp.buttons[14] && gp.buttons[14].pressed ? 0 : gp.buttons[15] && gp.buttons[15].pressed ? 2 : 1);
@@ -959,6 +1237,15 @@ function setRing(p) {
   r.setAttribute('cx', x); r.setAttribute('cy', y); r.setAttribute('opacity', 1);
   const rx = sp.zr[0] + 14, ry = sp.zr[1] + 14, c = Math.PI * (3 * (rx + ry) - Math.sqrt((3 * rx + ry) * (rx + 3 * ry)));
   r.setAttribute('stroke-dasharray', `${(c * p).toFixed(1)} ${c.toFixed(1)}`);
+}
+
+function freeMove() {                // 2~4단계: 마우스 따라가기 / 누르는 동안 이동 (한 칸 이동은 stepMove가 처리)
+  const lim = rng() * 1.15;
+  if (S.mouseMove && ptrX != null) plTarget = clampN(ptrX - sp.start[0], -lim, lim);
+  else if (!stepStyle()) {
+    plTarget = moveDir ? moveDir * lim : plOff;
+    $('mvL').classList.toggle('act', moveDir < 0); $('mvR').classList.toggle('act', moveDir > 0);
+  }
 }
 
 /* ---------- 매 프레임 ---------- */
@@ -986,12 +1273,11 @@ function loop(now) {
     // 우리 선수 좌우 이동
     if (S.mode === 'scan') plTarget = zoneOff(SCAN_SEQ[scanPos]);
     else if (S.mode === 'direct' && hoverZone >= 0) plTarget = zoneOff(hoverZone);
+    else if (isLR()) lrTick(dt);
     else if (isMove()) {
-      const lim = rng() * 1.15;
-      plTarget = moveDir ? moveDir * lim : plOff;
+      freeMove();
       const zNow = offZone(plOff);
-      if (zNow !== lastMoveZone) { lastMoveZone = zNow; highlight(zNow); setBanner(); if (moveDir) sfx.tick(); }
-      $('mvL').classList.toggle('act', moveDir < 0); $('mvR').classList.toggle('act', moveDir > 0);
+      if (zNow !== lastMoveZone) { lastMoveZone = zNow; highlight(zNow); setBanner(); sfx.tick(); }
     }
     stepPlayer(dt);
     // 상대 선수 기다리는 동작
@@ -1001,11 +1287,10 @@ function loop(now) {
     }
   } else if ((state === 'serveWait' || state === 'incoming') && !settingsOpen && canMove()) {
     // 3·4단계: 공이 오는 동안 좌우 이동
-    plTarget = moveDir ? moveDir * rng() * 1.15 : plOff;
+    freeMove();
     const zNow = offZone(plOff);
-    if (zNow !== lastMoveZone) { lastMoveZone = zNow; setBanner(); if (moveDir) sfx.tick(); }
+    if (zNow !== lastMoveZone) { lastMoveZone = zNow; setBanner(); sfx.tick(); }
     if (state === 'incoming') showRecvMark(null, null, true, zNow === recvZone);
-    $('mvL').classList.toggle('act', moveDir < 0); $('mvR').classList.toggle('act', moveDir > 0);
     stepPlayer(dt);
   } else if (state === 'title') {
     P.op.x = sp.opp.x + Math.sin(now / 900) * 22; setPerson('op', P.op);
@@ -1016,7 +1301,7 @@ function loop(now) {
 /* ---------- 시작 화면 카드 ---------- */
 function renderCards() {
   $('cards').innerHTML = Object.entries(SP).map(([k, v]) => `<button class="card ${k === S.sport ? 'sel' : ''}" data-sport="${k}"><span>${v.icon}</span>${v.name}</button>`).join('');
-  const LVB = [['simple', '1단계', '누르기'], ['move', '2단계', '움직이며 누르기'], ['receive', '3단계', '공 받기'], ['rally', '4단계', '받고 공격'], ['scan', '스위치', '스캔'], ['direct', '보조기기', '직접 고르기']];
+  const LVB = [['simple', '1단계', '누르기'], ['move', '2단계', '움직이며 누르기'], ['receive', '3단계', '공 받기'], ['rally', '4단계', '받고 공격'], ['lr', '방향', '왼쪽·오른쪽 익히기'], ['scan', '스위치', '스캔'], ['direct', '보조기기', '직접 고르기']];
   $('levels').innerHTML = LVB.map(([m, a, b]) => `<button class="lvl ${m === S.mode ? 'sel' : ''}" data-mode="${m}"><b>${a}</b>${b}</button>`).join('');
 }
 $('levels').addEventListener('pointerdown', e => {
@@ -1051,10 +1336,11 @@ function closeSettings() {
   if (state === 'serveWait' || (state === 'ready' && !(S.mode === 'rally' && rallyOpp >= 0))) startReady();
   else if (state === 'ready') setBanner();
 }
-const FIELDS = ['sport', 'mode', 'scanMs', 'opp', 'motion', 'trigger', 'hold', 'debounce', 'dwell', 'pause', 'ratio', 'name', 'team', 'sound', 'voice', 'reduce', 'recvMs', 'autoLevel'];
+const FIELDS = ['sport', 'mode', 'scanMs', 'opp', 'motion', 'trigger', 'hold', 'debounce', 'dwell', 'pause', 'ratio', 'name', 'team', 'sound', 'voice', 'reduce', 'recvMs', 'autoLevel', 'lrKinds', 'lrMax', 'moveStyle', 'lrHint', 'lrBlock', 'mouseMove'];
 const fmt = {
   scanMs: v => (v / 1000).toFixed(1) + '초', hold: v => v == 0 ? '바로' : (v / 1000).toFixed(1) + '초',
   debounce: v => (v / 1000).toFixed(1) + '초', dwell: v => v == 0 ? '끔' : (v / 1000).toFixed(2).replace(/0$/, '') + '초',
+  lrMax: v => v + '번',
   pause: v => (v / 1000).toFixed(1) + '초', recvMs: v => (v / 1000).toFixed(1) + '초',
   motion: v => { v = +v; return (v < .55 ? '아주 느리게' : v < .85 ? '느리게' : v < 1.15 ? '보통' : '빠르게') + ` (×${v.toFixed(2)})`; }
 };
@@ -1067,7 +1353,8 @@ FIELDS.forEach(k => {
     const v = el.type === 'checkbox' ? el.checked : el.type === 'range' ? +el.value : el.value;
     S[k] = v; saveS();
     if (fmt[k]) $('o_' + k).textContent = fmt[k](v);
-    if (['sport', 'team', 'opp', 'reduce', 'mode'].includes(k)) { if (state === 'title' || state === 'ready' || state === 'serveWait') buildScene(); else needBuild = true; }
+    if (k === 'mode') { lrM = null; showRecvMark(0, 0, false); }
+    if (['sport', 'team', 'opp', 'reduce', 'mode', 'lrMax', 'lrHint'].includes(k)) { if (state === 'title' || state === 'ready' || state === 'serveWait') buildScene(); else needBuild = true; }
     if (k === 'mode') { levelWins = 0; rallyOpp = -1; updateZonesVisibility(); highlight(-1); cols(-1); setRing(0); renderCards(); }
     if (k === 'ratio') layout();
     if (k === 'sport' && state !== 'title') { score = 0; shots = 0; updateHUD(); }
